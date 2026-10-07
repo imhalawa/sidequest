@@ -308,3 +308,30 @@ test('an idea longer than 255 characters is cut at 255', async ($, on) => {
 
   expect(calls.at(-1)?.at(-1)).toHaveLength(255)
 })
+
+test('hide finished removes finished branches and brings them back', async ($, on) => {
+  stubs(on, {
+    current: 2,
+    topics: [
+      { id: 1, title: 'Fix the checkout timeout', parent: null, status: 'open', sessions: ['test-session'] },
+      { id: 2, title: 'Read the gateway logs', parent: 1, status: 'open', sessions: ['test-session'] },
+      { id: 3, title: 'Restart the web pods', parent: 1, status: 'done' },
+      { id: 4, title: 'Old research', parent: null, status: 'done' },
+      { id: 5, title: 'Old research notes', parent: 4, status: 'done' },
+      { id: 6, title: 'Done parent', parent: null, status: 'done' },
+      { id: 7, title: 'Still open child', parent: 6, status: 'open', sessions: ['test-session'] },
+    ],
+  })
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  await ui.press({ key: 'hide-finished' })
+
+  expect(await ui.find({ key: 'switch-4' })).toBeUndefined()
+  expect(await ui.find({ key: 'switch-3' })).toBeUndefined()
+  expect(await ui.find({ key: 'switch-6' })).toBeDefined()
+  expect(await ui.find({ key: 'switch-2' })).toBeDefined()
+
+  await ui.press({ key: 'hide-finished' })
+
+  expect(await ui.find({ key: 'switch-4' })).toBeDefined()
+})

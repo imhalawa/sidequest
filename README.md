@@ -25,7 +25,7 @@ A panel above the prompt:
 | Buttons | `↑ up`, `✓ done`, `✗ drop`, `◉ focus`, and `⇢ delegate` on topics Claude elected |
 | `◇ capture` | One press opens a 3-line idea box with the cursor in it, up to 255 characters; Enter parks the idea. It never reaches Claude |
 
-Keys, once the panel has the focus (ctrl+x tab): `c` collapse, `u` up, `d` done, `x` drop, `f` focus, `p` parked ideas, `i` capture.
+Keys, once the panel has the focus (ctrl+x tab): `c` collapse, `u` up, `d` done, `x` drop, `f` focus, `p` parked ideas, `i` capture, `h` hide or show finished topics.
 
 A session with no topics yet shows one line, `sidequest · no topics yet`, so you can tell the plugin is loaded.
 
@@ -61,6 +61,7 @@ Installed or reloaded in a session that is already open, the plugin sends its fu
 | `✓ done` on a topic with open subtopics | Hidden; the CLI refuses it and names the subtopics |
 | `✗ drop` on a topic with open subtopics | Drops the whole branch |
 | Clicking a topic | Switches to it; the folds you see stay as they are |
+| `✓ hide finished` | Hides finished and dropped branches; a finished topic with open subtopics stays so the open ones keep their place |
 | `◉ focus` | Pauses the topic you were on and starts Claude on the focus topic at once; if you are typing, the switch rides along with your message instead |
 | `end focus`, or the focus topic done | Claude resumes the paused topic from its last progress entry |
 

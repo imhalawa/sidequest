@@ -22,6 +22,7 @@ const toggled = atom({ plugin: 'sidequest', key: 'toggled' } as const, [] as Top
 const pendingNote = atom({ plugin: 'sidequest', key: 'pendingNote' } as const, '')
 const isCaptureOpen = atom({ plugin: 'sidequest', key: 'isCaptureOpen' } as const, false)
 const idea = atom({ plugin: 'sidequest', key: 'idea' } as const, '')
+const isFinishedHidden = atom({ plugin: 'sidequest', key: 'isFinishedHidden' } as const, false)
 const IDEA_LIMIT = 255
 
 const COLORS = {
@@ -265,6 +266,7 @@ export const register: Register = (on, options) => {
     const Input = 'Input' in elements ? elements.Input : null
     const captureOpen = await read($, isCaptureOpen)
     const draftIdea = await read($, idea)
+    const hideFinished = await read($, isFinishedHidden)
     const collapsed = await read($, isCollapsed)
     const parkedOpen = await read($, isParkedOpen)
     const flipped = await read($, toggled)
@@ -358,7 +360,8 @@ export const register: Register = (on, options) => {
         </Box>,
       )
     const walk = (parent: number | null, prefix: string) => {
-      const children = state.topics.filter(topic => topic.parent === parent && topic.status !== 'parked')
+      const children = state.topics.filter(topic => topic.parent === parent && topic.status !== 'parked' &&
+        !(hideFinished && topic.status !== 'open' && topic.id !== state.current && !descendants(state, topic.id).some(item => item.status === 'open')))
       const closedLeaves = children.filter(topic => topic.status !== 'open' && !descendants(state, topic.id).length && topic.id !== state.current)
       const showClosed = flipped.includes(-(parent ?? 0) - 1) || closedLeaves.length < 2
       const visible = showClosed ? children : children.filter(topic => !closedLeaves.includes(topic))
@@ -431,7 +434,11 @@ export const register: Register = (on, options) => {
         {current && !focus ? <Button key="focus" hotkey="f" label={compact ? '◉' : '◉ focus'} onPress={() => startFocus(current)} /> : null}
       </Box>,
 <Box key="capture-row" flexDirection="column">
-        <Button key="capture" hotkey="i" label={captureOpen ? '◇ close capture' : '◇ capture'} onPress={() => update($, isCaptureOpen, value => !value)} />
+        <Box flexDirection="row" gap={1}>
+          <Button key="capture" hotkey="i" label={captureOpen ? '◇ close capture' : '◇ capture'} onPress={() => update($, isCaptureOpen, value => !value)} />
+          <Button key="hide-finished" hotkey="h" dimColor label={hideFinished ? `✓ show finished (${count('done') + count('dropped')})` : '✓ hide finished'}
+            onPress={() => update($, isFinishedHidden, value => !value)} />
+        </Box>
         {captureOpen && Input ? (
           <Box borderStyle="round" borderColor={COLORS.parked} paddingX={1} minHeight={3} flexDirection="column">
             <Input key="idea" autoFocus value={draftIdea} placeholder="a new idea, Enter to park it"
