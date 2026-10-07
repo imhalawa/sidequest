@@ -223,3 +223,53 @@ test('finished, dropped, and running topics cannot be clicked', async ($, on) =>
   expect(buttons).toContain('switch-5')
   expect(buttons).not.toContain('done')
 })
+
+const FOCUSABLE = {
+  current: 2,
+  focus: null,
+  topics: [
+    { id: 1, title: 'Plan the team offsite', parent: null, status: 'open', sessions: ['test-session'] },
+    { id: 2, title: 'Book the venue', parent: 1, status: 'open', sessions: ['test-session'] },
+  ],
+}
+
+function focusStubs(on: Parameters<Parameters<typeof test>[1] & ((...args: never[]) => unknown)>[1], draft: string, submitted: string[]) {
+  stubs(on, FOCUSABLE)
+  on('process.run', ($, e) => {
+    const args = [...e.argv]
+    const stdout = args.includes('focus') ? 'focus on #2 Book the venue\npaused #1 Plan the team offsite' : ''
+    return { value: { exitCode: 0, stdout, stderr: '' } }
+  })
+  on('prompt.read', () => ({ value: { text: draft, cursor: draft.length } }) as never)
+  on('prompt.submit', ($, e) => {
+    submitted.push(e.text)
+    return { text: e.text, context: e.context }
+  })
+  on('ui.toast', () => ({ value: undefined }))
+}
+
+test('pressing focus with an empty prompt starts Claude on the focus topic', async ($, on) => {
+  const submitted: string[] = []
+  focusStubs(on, '', submitted)
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  await ui.press({ key: 'focus' })
+
+  expect(submitted).toHaveLength(1)
+  expect(submitted[0]).toContain('Focus is now on #2')
+  expect(submitted[0]).toContain('progress entry on #1')
+})
+
+test('pressing focus while typing attaches the focus switch to the typed message instead', async ($, on) => {
+  const submitted: string[] = []
+  focusStubs(on, 'look at the logs first', submitted)
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  await ui.press({ key: 'focus' })
+
+  expect(submitted).toHaveLength(0)
+
+  const result = await $.prompt.submit({ text: 'look at the logs first' })
+
+  expect((result as { context?: string[] }).context?.join(' ')).toContain('Focus is now on #2')
+})

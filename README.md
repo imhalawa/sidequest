@@ -61,6 +61,8 @@ Installed or reloaded in a session that is already open, the plugin sends its fu
 | `✓ done` on a topic with open subtopics | Hidden; the CLI refuses it and names the subtopics |
 | `✗ drop` on a topic with open subtopics | Drops the whole branch |
 | Clicking a topic | Switches to it; the folds you see stay as they are |
+| `◉ focus` | Pauses the topic you were on and starts Claude on the focus topic at once; if you are typing, the switch rides along with your message instead |
+| `end focus`, or the focus topic done | Claude resumes the paused topic from its last progress entry |
 
 ## Reporting a bug
 

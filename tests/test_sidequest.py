@@ -750,6 +750,46 @@ class FocusTests(TopicTreeTestCase):
         self.assertIn("park", context)
 
 
+class FocusResumeTests(TopicTreeTestCase):
+    def setUp(self):
+        super().setUp()
+        self.cli("fork", "Plan the team offsite")
+        self.cli("fork", "Book the venue")
+        self.cli("fork", "Fix the production outage", "--under", "root")
+        self.cli("now", "2")
+
+    def test_focus_SwitchesToTheFocusTopicAndPausesTheOneYouWereOn(self):
+        result = self.cli("focus", "3")
+
+        self.assertEqual(self.state()["current"], 3)
+        self.assertEqual(self.state()["paused"], 2)
+        self.assertIn("paused #2 Book the venue", result.stdout)
+
+    def test_focusOff_ReturnsToThePausedTopic(self):
+        self.cli("focus", "3")
+
+        result = self.cli("focus", "--off")
+
+        self.assertEqual(self.state()["current"], 2)
+        self.assertIsNone(self.state()["paused"])
+        self.assertIn("resume #2 Book the venue", result.stdout)
+
+    def test_done_OnTheFocusTopic_ReturnsToThePausedTopic(self):
+        self.cli("focus", "3")
+
+        result = self.cli("done", "3")
+
+        self.assertEqual(self.state()["current"], 2)
+        self.assertIn("resume #2 Book the venue", result.stdout)
+
+    def test_focus_OnTheTopicYouAreOn_PausesNothing(self):
+        self.cli("now", "3")
+
+        self.cli("focus", "3")
+
+        self.assertIsNone(self.state().get("paused"))
+
+
 class ParkTests(TopicTreeTestCase):
     def test_park_SavesTheIdeaWithWhereItCameFrom(self):
         self.cli("fork", "Fix the production outage")

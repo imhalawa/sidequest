@@ -19,6 +19,7 @@ const isCollapsed = atom({ plugin: 'sidequest', key: 'isCollapsed' } as const, f
 const isParkedOpen = atom({ plugin: 'sidequest', key: 'isParkedOpen' } as const, false)
 const version = atom({ plugin: 'sidequest', key: 'version' } as const, 0 as Version)
 const toggled = atom({ plugin: 'sidequest', key: 'toggled' } as const, [] as TopicId[])
+const pendingNote = atom({ plugin: 'sidequest', key: 'pendingNote' } as const, '')
 
 const LOOKS = {
   current: { glyph: '▶', color: 'cyan' },
@@ -108,6 +109,11 @@ export const register: Register = (on, options) => {
 
   on('prompt.submit', async ($, e, next) => {
     if (!e.text.startsWith('+ ')) {
+      const note = await read($, pendingNote)
+      if (note && !e.origin) {
+        await update($, pendingNote, () => '')
+        return next({ ...e, context: [...(e.context ?? []), note] })
+      }
       return next(e)
     }
     const session = await $.session.id()
@@ -191,6 +197,38 @@ export const register: Register = (on, options) => {
       }
       return result
     }
+    const announce = async (note: string) => {
+      const draft = await $.prompt.read()
+      if (draft.text.trim()) {
+        await update($, pendingNote, () => note)
+        $.ui.toast('focus set: it applies to the message you are typing')
+        return
+      }
+      await $.prompt.submit({ text: note })
+    }
+    const startFocus = async (topic: Topic) => {
+      const result = await run('focus', String(topic.id))
+      if (result.exitCode !== 0) return
+      const paused = /paused #(\d+) (.*)/.exec(result.stdout)
+      await announce(
+        `[sidequest] Focus is now on #${topic.id} "${topic.title}".` +
+        (paused ? ` Save a progress entry on #${paused[1]} "${paused[2]}" (done, decided, next step) so it can be resumed later.` : '') +
+        ' Then start on the focus topic: read its notes and links, say in one line what you will do first, and do it.')
+    }
+    const endFocus = async () => {
+      const result = await run('focus', '--off')
+      const resumed = /resume #(\d+) (.*)/.exec(result.stdout)
+      if (resumed) {
+        await announce(`[sidequest] Focus ended. Resume #${resumed[1]} "${resumed[2]}" from its last progress entry: say in one line where it stood, then continue.`)
+      }
+    }
+    const finish = async (topic: Topic) => {
+      const result = await run('done', String(topic.id))
+      const resumed = /resume #(\d+) (.*)/.exec(result.stdout)
+      if (resumed) {
+        await announce(`[sidequest] Focus topic "${topic.title}" is done. Resume #${resumed[1]} "${resumed[2]}" from its last progress entry: say in one line where it stood, then continue.`)
+      }
+    }
     const delegate = async (topic: Topic) => {
       const brief = await $.process.run([...cli, 'brief', String(topic.id)])
       const started = await $.agent.spawn({ prompt: brief.stdout, description: `sidequest: ${topic.title}` })
@@ -240,7 +278,7 @@ export const register: Register = (on, options) => {
       <Box flexDirection="row" gap={1}>
         <Text bold color="white" backgroundColor="red"> ◉ FOCUS </Text>
         <Text bold color="red">{fit(focus.title, Math.max(8, columns - 26))}</Text>
-        <Button key="unfocus" plain dimColor label="end focus" onPress={() => run('focus', '--off')} />
+        <Button key="unfocus" plain dimColor label="end focus" onPress={() => endFocus()} />
       </Box>
     ) : null
     const frame = (children: RenderChildren) => (
@@ -354,9 +392,9 @@ export const register: Register = (on, options) => {
       parkedSection,
       <Box key="actions" flexDirection="row" gap={1} marginTop={1}>
         {openUp && inFocus(openUp) ? <Button key="up" hotkey="u" dimColor label={compact ? '↑' : '↑ up'} onPress={() => switchTo(openUp.id)} /> : null}
-        {current && !hasOpenChildren ? <Button key="done" hotkey="d" variant="primary" label={compact ? '✓' : '✓ done'} onPress={() => run('done', String(current.id))} /> : null}
+        {current && !hasOpenChildren ? <Button key="done" hotkey="d" variant="primary" label={compact ? '✓' : '✓ done'} onPress={() => finish(current)} /> : null}
         {current ? <Button key="drop" hotkey="x" dimColor label={compact ? '✗' : '✗ drop'} onPress={() => run('drop', String(current.id))} /> : null}
-        {current && !focus ? <Button key="focus" hotkey="f" label={compact ? '◉' : '◉ focus'} onPress={() => run('focus', String(current.id))} /> : null}
+        {current && !focus ? <Button key="focus" hotkey="f" label={compact ? '◉' : '◉ focus'} onPress={() => startFocus(current)} /> : null}
       </Box>,
       Input ? (
         <Box key="capture" borderStyle="single" borderDimColor paddingX={1}>

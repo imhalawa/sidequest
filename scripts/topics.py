@@ -159,6 +159,9 @@ def close(state, topic_id, status):
         ideas = parked_during(state, topic_id)
         print(f"Focus finished. Parked while on it: {len(ideas)}")
         print("\n".join(f"- {idea['title']}  #{idea['id']}" for idea in ideas))
+        message = resume_paused(state)
+        if message:
+            print(message)
     return 0
 
 
@@ -236,18 +239,35 @@ def park(state, session, text):
     return 0
 
 
+def resume_paused(state):
+    paused = tree.find(state, state.get("paused")) if state.get("paused") is not None else None
+    state["paused"] = None
+    if paused is None or paused["status"] != "open":
+        return ""
+    enter(state, paused)
+    return f"resume #{paused['id']} {paused['title']}"
+
+
 def focus(state, topic_id, off):
     if off:
         state["focus"] = None
         print("focus off")
+        message = resume_paused(state)
+        if message:
+            print(message)
         return 0
     topic = tree.find(state, topic_id)
     if topic is None:
         return fail(f"no topic #{topic_id}")
     if topic["status"] != "open":
         return fail(f"#{topic_id} is {topic['status']}; only an open topic can be the focus")
+    leaving = tree.find(state, state["current"]) if state["current"] is not None else None
     state["focus"] = topic_id
     print(f"focus on #{topic_id} {topic['title']}")
+    if leaving is not None and leaving["id"] != topic_id and leaving["status"] == "open":
+        state["paused"] = leaving["id"]
+        print(f"paused #{leaving['id']} {leaving['title']}")
+    enter(state, topic)
     return 0
 
 

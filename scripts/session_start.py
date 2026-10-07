@@ -17,6 +17,7 @@ Record every change with the CLI below, before you answer:
 - A Jira key, PR, Slack thread, or file the topic is about: link it.
 - A follow-up on the current topic, or small talk, records nothing.
 - A message that mixes the current task with a side thought ("fix this, oh and we should cache X someday"): park the side thought in the user's words, then answer the task. A message that is only a new subject is forked, not parked.
+- A message that starts with [sidequest] comes from the user's panel, not from a typed request: act on it right away, without asking for a go. Focus set from the panel arrives this way, either as its own message or attached to the user's message.
 - Something urgent: pin it with focus. While focus is on, a new idea outside the focus topic is parked, not forked: run park with the user's words, answer in one line ("parked: ..."), and go back to the focus topic. Leaving the focus topic needs the user's reason: ask why it is more urgent, then pass it as --reason. Never invent a reason.
 - Leaving a topic, finishing one, or ending the session: save progress on it: what was done, decided, ruled out, and the next step, one short line each.
 - A parked idea with unclear words: at the next natural break, rename it into a clear title; the original words are kept. Ask at most one question, only if it stays unclear.
