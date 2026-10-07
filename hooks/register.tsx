@@ -20,6 +20,9 @@ const isParkedOpen = atom({ plugin: 'sidequest', key: 'isParkedOpen' } as const,
 const version = atom({ plugin: 'sidequest', key: 'version' } as const, 0 as Version)
 const toggled = atom({ plugin: 'sidequest', key: 'toggled' } as const, [] as TopicId[])
 const pendingNote = atom({ plugin: 'sidequest', key: 'pendingNote' } as const, '')
+const isCaptureOpen = atom({ plugin: 'sidequest', key: 'isCaptureOpen' } as const, false)
+const idea = atom({ plugin: 'sidequest', key: 'idea' } as const, '')
+const IDEA_LIMIT = 255
 
 const LOOKS = {
   current: { glyph: '▶', color: 'cyan' },
@@ -222,6 +225,15 @@ export const register: Register = (on, options) => {
         await announce(`[sidequest] Focus ended. Resume #${resumed[1]} "${resumed[2]}" from its last progress entry: say in one line where it stood, then continue.`)
       }
     }
+    const park = async (text: string) => {
+      const value = text.trim().slice(0, IDEA_LIMIT)
+      if (!value) return
+      const result = await $.process.run([...cli.slice(0, -2), '--via', 'capture', 'park', value])
+      await update($, version, current => current + 1)
+      await update($, idea, () => '')
+      await update($, isCaptureOpen, () => false)
+      $.ui.toast(result.exitCode === 0 ? `parked: ${value}` : result.stderr.trim())
+    }
     const finish = async (topic: Topic) => {
       const result = await run('done', String(topic.id))
       const resumed = /resume #(\d+) (.*)/.exec(result.stdout)
@@ -238,6 +250,8 @@ export const register: Register = (on, options) => {
     const elements = $.ui.resolve(e)
     const { Box, Text, Button } = elements
     const Input = 'Input' in elements ? elements.Input : null
+    const captureOpen = await read($, isCaptureOpen)
+    const draftIdea = await read($, idea)
     const collapsed = await read($, isCollapsed)
     const parkedOpen = await read($, isParkedOpen)
     const flipped = await read($, toggled)
@@ -396,12 +410,17 @@ export const register: Register = (on, options) => {
         {current ? <Button key="drop" hotkey="x" dimColor label={compact ? '✗' : '✗ drop'} onPress={() => run('drop', String(current.id))} /> : null}
         {current && !focus ? <Button key="focus" hotkey="f" label={compact ? '◉' : '◉ focus'} onPress={() => startFocus(current)} /> : null}
       </Box>,
-      Input ? (
-        <Box key="capture" borderStyle="single" borderDimColor paddingX={1}>
-          <Input key="capture" placeholder="capture an idea, Enter to park it" submitLabel="park"
-            onSubmit={(value: string) => { if (value.trim()) { void run('park', value.trim()) } }} />
-        </Box>
-      ) : null,
+<Box key="capture-row" flexDirection="column">
+        <Button key="capture" hotkey="i" label={captureOpen ? '◇ close capture' : '◇ capture'} onPress={() => update($, isCaptureOpen, value => !value)} />
+        {captureOpen && Input ? (
+          <Box borderStyle="round" borderColor="magenta" paddingX={1} minHeight={3} flexDirection="column">
+            <Input key="idea" autoFocus value={draftIdea} placeholder="a new idea, Enter to park it"
+              onInput={(value: string) => { void update($, idea, () => value.slice(0, IDEA_LIMIT)) }}
+              onSubmit={(value: string) => { void park(value) }} />
+            <Text dimColor color={draftIdea.length >= IDEA_LIMIT ? 'red' : undefined}>{draftIdea.length}/{IDEA_LIMIT}</Text>
+          </Box>
+        ) : null}
+      </Box>,
     ])
   })
 }

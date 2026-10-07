@@ -23,9 +23,9 @@ A panel above the prompt:
 | Tree | `☐` open, `▶` current, `✓` done, `✗` dropped, `⇢` delegated, `!` needs you. `[ + ]` / `[ − ]` fold a branch. Only the path to the current topic starts open; finished siblings collapse to `✓ N finished`; open topics not touched this session are dimmed |
 | `◇ parked ideas` | Ideas saved while working on something else, folded by default |
 | Buttons | `↑ up`, `✓ done`, `✗ drop`, `◉ focus`, and `⇢ delegate` on topics Claude elected |
-| Capture box | Type an idea, Enter parks it. It never reaches Claude |
+| `◇ capture` | One press opens a 3-line idea box with the cursor in it, up to 255 characters; Enter parks the idea. It never reaches Claude |
 
-Keys, once the panel has the focus (ctrl+x tab): `c` collapse, `u` up, `d` done, `x` drop, `f` focus, `p` parked ideas.
+Keys, once the panel has the focus (ctrl+x tab): `c` collapse, `u` up, `d` done, `x` drop, `f` focus, `p` parked ideas, `i` capture.
 
 A session with no topics yet shows one line, `sidequest · no topics yet`, so you can tell the plugin is loaded.
 

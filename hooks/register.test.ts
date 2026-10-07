@@ -273,3 +273,38 @@ test('pressing focus while typing attaches the focus switch to the typed message
 
   expect((result as { context?: string[] }).context?.join(' ')).toContain('Focus is now on #2')
 })
+
+test('capture opens a focused box that parks the idea on Enter', async ($, on) => {
+  const calls: string[][] = []
+  stubs(on, FOCUSABLE)
+  on('process.run', ($, e) => {
+    calls.push([...e.argv])
+    return { value: { exitCode: 0, stdout: '#9 parked', stderr: '' } }
+  })
+  on('ui.toast', () => ({ value: undefined }))
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  expect(await ui.find({ key: 'idea' })).toBeUndefined()
+
+  await ui.press({ key: 'capture' })
+  await ui.input({ key: 'idea', text: 'cache the price lookups' })
+
+  expect(calls.at(-1)?.slice(-4)).toEqual(['--via', 'capture', 'park', 'cache the price lookups'])
+  expect(await ui.find({ key: 'idea' })).toBeUndefined()
+})
+
+test('an idea longer than 255 characters is cut at 255', async ($, on) => {
+  const calls: string[][] = []
+  stubs(on, FOCUSABLE)
+  on('process.run', ($, e) => {
+    calls.push([...e.argv])
+    return { value: { exitCode: 0, stdout: '', stderr: '' } }
+  })
+  on('ui.toast', () => ({ value: undefined }))
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  await ui.press({ key: 'capture' })
+  await ui.input({ key: 'idea', text: 'x'.repeat(300) })
+
+  expect(calls.at(-1)?.at(-1)).toHaveLength(255)
+})
