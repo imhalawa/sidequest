@@ -2,19 +2,7 @@
 
 [![checks](https://github.com/imhalawa/sidequest/actions/workflows/checks.yml/badge.svg)](https://github.com/imhalawa/sidequest/actions/workflows/checks.yml)
 
-Keeps a tree of the topics a session forks into, shows it live above the prompt, and keeps urgent work in front while new ideas are parked, not lost.
-
-## Install
-
-In a Claude Code terminal session:
-
-```
-/plugin install sidequest --marketplace imhalawa/sidequest
-```
-
-Answer `y` to add the marketplace, pick a scope, then choose the settings or keep the defaults. Requires `python3` on the `PATH`.
-
-## What you see
+A live topic tree for Claude Code. It shows where a session forked off, keeps urgent work in front, and parks new ideas instead of losing them.
 
 ```
 [ − ]  sidequest  ☐ 4  ✓ 3  ◇ 1  │ Fix the checkout timeout › Read the gateway logs · depth 2
@@ -30,88 +18,150 @@ Answer `y` to add the marketplace, pick a scope, then choose the settings or kee
 [ ◇ capture ] [ ✓ hide finished ]
 ```
 
+## Quick start
 
-In the terminal, a panel above the prompt. In the desktop app, the same tree in a side panel that opens with the session, and a one-line strip above the prompt with `open topics`; `/sidequest` reopens the side panel.
+1. In a Claude Code terminal session, run:
+   ```
+   /plugin install sidequest --marketplace imhalawa/sidequest
+   ```
+2. Answer `y` to add the marketplace, pick a scope, and keep the default settings.
+3. Start working. Claude records topics from your first message, and the tree appears.
 
-| Part | Does |
+Requires `python3` on the `PATH`.
+
+## Features
+
+### Track
+
+| Feature | What it does |
 |---|---|
-| Header | Open, done, and parked counts; a breadcrumb to the current topic and its depth, red at the depth alert |
-| `◉ focus` line | The pinned urgent topic, with `end focus` |
-| Tree | `☐` open, `▶` current, `✓` done, `✗` dropped, `⇢` delegated, `!` needs you. `[ + ]` / `[ − ]` fold a branch. Only the path to the current topic starts open; finished siblings collapse to `✓ N finished`; open topics not touched this session are dimmed |
-| `◇ parked ideas` | Ideas saved while working on something else, folded by default |
-| Buttons | `↑ up`, `✓ done`, `✗ drop`, `◉ focus`, and `⇢ delegate` on topics Claude elected |
-| `◇ capture` | One press opens a 3-line idea box with the cursor in it, up to 255 characters; Enter parks the idea. It never reaches Claude |
+| Topic tree | Every subject and side question becomes a topic, nested where it forked off |
+| Clear titles | Each title names the action and what it acts on, so it reads on its own a day later |
+| Notes and links | Findings, decisions, Jira keys, PRs, Slack threads, and files stay on their topic; a new topic links its git branch by itself |
+| Progress | Leaving a topic saves where it stood: done, decided, ruled out, next step |
+| Depth alert | When you are 3 levels deep, Claude says so and names where you started |
 
-Keys, once the panel has the focus (ctrl+x tab): `c` collapse, `u` up, `d` done, `x` drop, `f` focus, `p` parked ideas, `i` capture, `h` hide or show finished topics.
+### Focus
 
-A session with no topics yet shows one line, `sidequest · no topics yet`, so you can tell the plugin is loaded.
-
-A prompt that starts with `+ ` is parked the same way and never reaches Claude. A draft of more than one word that you clear without sending is parked too, so a thought you typed and deleted is not lost.
-
-The panel fits the terminal: titles shorten with `…`, buttons shrink to their glyphs when the full bar does not fit, and a very narrow terminal gets one line.
-
-## What Claude does
-
-| Moment | Claude |
+| Feature | What it does |
 |---|---|
-| New subject or side question | Forks a topic with a title that names the action and its object |
-| Topic finished, abandoned, or returned to | Marks it done, drops it, or switches back and reads its notes |
-| Leaving a topic | Saves a progress entry: done, decided, ruled out, next step |
-| A side thought inside a task message | Parks it in your words, then answers the task |
-| Focus is on and a new idea comes up | Parks it, replies in one line, goes back to the focus topic |
-| Leaving focus | Asks why it is more urgent; the reason is saved on the focus topic |
-| 3 levels deep | Says so in one line, naming where you started |
-| A topic first comes up | Asks its priority once: now, today, or later |
-| Something worked on before | Finds it and offers: start fresh, continue with progress, or resume the old conversation |
-| Natural break (focus done, topic done, session start) | Lists parked ideas, most valuable first |
-| A topic a sub-agent could handle alone | Elects it silently; `⇢ delegate` appears. Nothing runs until you press it |
+| Focus mode | `◉ focus` pins an urgent topic, pauses the one you were on, and starts Claude on it right away |
+| Guarded switching | While focus is on, leaving needs a reason, and the reason is saved on the focus topic |
+| Resume | `end focus`, or finishing the focus topic, brings Claude back to the paused topic from its last progress entry |
 
-Installed or reloaded in a session that is already open, the plugin sends its full instructions with your next message.
+### Capture
 
-## Rules the panel keeps
-
-| Case | What happens |
+| Feature | What it does |
 |---|---|
-| A finished, dropped, or running topic | Shown, not clickable |
+| Parking | New ideas during focus, and side thoughts inside a task message, are parked as `◇` instead of derailing you |
+| `◇ capture` | One press opens a 3-line box, up to 255 characters; Enter parks the idea without reaching Claude |
+| `+ ` prefix | A message that starts with `+ ` is parked instead of sent |
+| Lost-thought recovery | A draft of more than one word that you clear without sending is parked |
+
+### Remember
+
+| Feature | What it does |
+|---|---|
+| Carry-over | A new session in the same folder offers the last session's open topics |
+| Past topics | Bring up something you worked on before, and Claude offers: start fresh, continue with the saved progress, or resume the old conversation |
+| Reminders | At natural breaks, Claude lists parked ideas, most valuable first: your priority, then how often the idea came back, then how close it is to your current work |
+| Priority | A new topic gets one quick question: now, today, or later |
+
+### Review
+
+| Feature | What it does |
+|---|---|
+| Standup | Done and open topics since yesterday, across sessions |
+| Stats | Forks per day, where your attention went, rabbit holes with no result, and setting suggestions from your own habits |
+
+### Delegate
+
+| Feature | What it does |
+|---|---|
+| Election | Claude marks topics a sub-agent could finish alone from their notes and links |
+| `⇢ delegate` | Appears only on elected topics; one press starts a sub-agent with the topic's brief, and its findings come back as notes |
+
+## The panel
+
+| Where | Shows |
+|---|---|
+| Terminal | The tree in a panel above the prompt |
+| Desktop app | The tree in a side panel that opens with the session, plus a one-line strip above the prompt with `open topics`. `/sidequest` reopens the side panel |
+
+### Glyphs
+
+| Glyph | Meaning |
+|---|---|
+| `☐` | Open |
+| `▶` | Current topic |
+| `✓` | Done |
+| `✗` | Dropped |
+| `◇` | Parked idea |
+| `⇢` | A sub-agent is working on it |
+| `!` | A sub-agent needs you |
+| `◉` | Focus |
+
+### Buttons and keys
+
+Keys work once the panel has the focus (ctrl+x tab).
+
+| Button | Key | Does |
+|---|---|---|
+| `[ − ]` / `[ + ]` in the header | `c` | Collapse or expand the panel |
+| `[ − ]` / `[ + ]` next to a topic | | Fold or unfold its branch |
+| A topic's title | | Switch to it; the folds stay as they are |
+| `↑ up` | `u` | Go to the nearest open parent |
+| `✓ done` | `d` | Finish the current topic |
+| `✗ drop` | `x` | Drop the current topic and its open subtopics |
+| `◉ focus` | `f` | Focus on the current topic |
+| `◇ parked ideas` | `p` | Show or hide parked ideas |
+| `◇ capture` | `i` | Open the capture box |
+| `✓ hide finished` | `h` | Hide or show finished topics |
+| `⇢ delegate` | | Start a sub-agent on an elected topic |
+
+### What it keeps you from doing by accident
+
+| Case | Behaviour |
+|---|---|
+| Finished, dropped, or delegated topics | Shown, not clickable |
 | Focus is on | Only topics inside the focus topic are clickable |
-| `↑ up` | Goes to the nearest open parent; hidden when there is none |
-| `✓ done` on a topic with open subtopics | Hidden; the CLI refuses it and names the subtopics |
-| `✗ drop` on a topic with open subtopics | Drops the whole branch |
-| Clicking a topic | Switches to it; the folds you see stay as they are |
-| `✓ hide finished` | Hides finished and dropped branches; a finished topic with open subtopics stays so the open ones keep their place |
-| `◉ focus` | Pauses the topic you were on and starts Claude on the focus topic at once; if you are typing, the switch rides along with your message instead |
-| `end focus`, or the focus topic done | Claude resumes the paused topic from its last progress entry |
+| `✓ done` with open subtopics | Hidden until the subtopics are finished or dropped |
+| Reopening a finished topic | Only when you ask for it |
 
-## Reporting a bug
-
-Run `/sidequest-report` (or `/sidequest-report redact` to hide titles and notes). It writes one file with the plugin version, every panel and Claude action with its result, and the topic tree, and prints its path. Attach that file to the issue.
-
-Every action is logged per session in `~/.claude/sidequest/logs/`, tagged with where it came from: `panel`, `claude`, `capture`, `draft`, or `sub-agent`.
-
-## Commands
-
-Claude records through the plugin's `topics` tool (`mcp__sidequest__topics`), so Bash sandboxing never blocks it. The same commands work from a shell, `python3 scripts/topics.py --session ID <command>`:
-
-| Command | Does |
-|---|---|
-| `fork "<title>" [--under <id>\|root] [--reason]` | New topic |
-| `done`, `drop`, `now <id> [--reason]`, `rename <id> "<title>"` | Change a topic |
-| `note`, `progress`, `link <kind> <value>` | Add to a topic, `--on <id>` for another than the current |
-| `park "<idea>"`, `focus <id> \| --off`, `priority <id> now\|today\|later` | Focus and parking |
-| `elect <id> [--off]`, `brief <id> [--edits]`, `delegation <id> running\|needs-input\|done` | Delegation |
-| `carry <session> [--dismiss]`, `back <session> <id> --mode fresh\|progress\|resume` | Past sessions |
-| `show [--ids]` | The tree |
-
-Without `--session`: `find "<words>"`, `parked`, `standup [--since YYYY-MM-DD]`, `stats`. With it: `report [--redact]`.
+The panel fits the terminal: long titles shorten with `…`, buttons shrink to their glyphs, and a very narrow terminal gets one line. A session with no topics shows `sidequest · no topics yet`.
 
 ## Settings
 
+Open `/plugin` → Installed → sidequest.
+
 | Setting | Choices | Default |
 |---|---|---|
-| Depth alert | 2 levels: strict, 3 levels: balanced, 4 levels: relaxed, off | 3 levels: balanced |
-| Parked ideas per reminder | top 3, top 5, all | all |
+| Depth alert | 2 levels: strict · 3 levels: balanced · 4 levels: relaxed · off | 3 levels: balanced |
+| Parked ideas per reminder | top 3 · top 5 · all | all |
 
-`stats` suggests values from your own history.
+`stats` suggests a depth alert from your own history.
+
+## Reporting a bug
+
+1. Run `/sidequest-report`, or `/sidequest-report redact` to hide titles and notes.
+2. Attach the file whose path it prints to your issue.
+
+The file holds the plugin version, every panel and Claude action with its result, and the topic tree. Actions are logged per session in `~/.claude/sidequest/logs/`, tagged `panel`, `claude`, `capture`, `draft`, or `sub-agent`.
+
+## Commands
+
+Claude records through the plugin's own `topics` tool, so Bash sandboxing never blocks it. The same commands work from a shell: `python3 scripts/topics.py --session ID <command>`.
+
+| Command | Does |
+|---|---|
+| `fork "<title>" [--under <id>\|root]` | New topic |
+| `done <id>` · `drop <id>` · `now <id> [--reopen]` · `rename <id> "<title>"` | Change a topic |
+| `note` · `progress` · `link <kind> <value>` | Add to a topic; `--on <id>` for another one |
+| `park "<idea>"` · `focus <id> \| --off` · `priority <id> now\|today\|later` | Focus and parking |
+| `elect <id>` · `brief <id>` · `delegation <id> <status>` | Delegation |
+| `carry <session>` · `back <session> <id> --mode fresh\|progress\|resume` | Past sessions |
+| `show [--ids]` · `report [--redact]` | The tree, a bug report |
+| `find "<words>"` · `parked` · `standup` · `stats` | Across all sessions; no `--session` needed |
 
 ## Storage
 
@@ -126,7 +176,9 @@ One JSON file per session in `~/.claude/sidequest/`, never pruned. `SIDEQUEST_HO
 | Validation | `claude plugin validate .` |
 | Evals | `claude plugin eval . --allow-tools mcp__sidequest__topics Agent` |
 
-`SIDEQUEST_NOW` fixes the clock for tests. `EVAL_SIDEQUEST_SEED` starts an eval session from a JSON file, or from a folder of session files whose `current.json` is the new session.
+`SIDEQUEST_NOW` fixes the clock in tests. `EVAL_SIDEQUEST_SEED` starts an eval session from a JSON file, or from a folder of session files whose `current.json` is the new session.
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
 ## License
 
