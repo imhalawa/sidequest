@@ -170,7 +170,8 @@ def now(state, session, topic_id, reason, reopen=False):
     if topic is None:
         return fail(f"no topic #{topic_id}")
     if topic["status"] in ("done", "dropped") and not reopen:
-        return fail(f"#{topic_id} {topic['title']} is {topic['status']}. Pass --reopen only when the user asks to reopen it.")
+        return fail(f"#{topic_id} {topic['title']} is {topic['status']}, so it stays closed. Pass --reopen only when the user asks to reopen it. "
+                    f"What it holds:\n{tree.describe(topic)}")
     if state["focus"] is not None:
         refused = guard(state, topic_id, topic["title"], reason)
         if refused:

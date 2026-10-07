@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.1",
+  "name": "reopen-not-assumed",
+  "description": "Asking about a finished topic answers from its notes and does not reopen it.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "what did we conclude about restarting the web pods?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/reopen-not-assumed/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "no-reopen",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"--reopen\"",
+      "min": 0,
+      "max": 0
+    },
+    {
+      "type": "regex",
+      "name": "uses-notes",
+      "target": "last_message",
+      "pattern": "hour|cleared",
+      "match": "contains",
+      "flags": "i"
+    }
+  ]
+}

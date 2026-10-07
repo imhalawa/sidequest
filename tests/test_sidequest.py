@@ -150,6 +150,13 @@ class ClosedTopicTests(TopicTreeTestCase):
         self.assertIn("--reopen", result.stderr)
         self.assertEqual(self.state()["topics"][1]["status"], "done")
 
+    def test_now_OnAFinishedTopic_StillShowsItsNotes(self):
+        self.cli("note", "restart cleared the errors for an hour", "--on", "2")
+
+        result = self.cli("now", "2")
+
+        self.assertIn("restart cleared the errors for an hour", result.stderr)
+
     def test_now_WithReopen_OpensTheFinishedTopic(self):
         self.cli("now", "2", "--reopen")
 

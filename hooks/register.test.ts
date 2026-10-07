@@ -257,7 +257,7 @@ test('pressing focus with an empty prompt starts Claude on the focus topic', asy
 
   expect(submitted).toHaveLength(1)
   expect(submitted[0]).toContain('Focus is now on #2')
-  expect(submitted[0]).toContain('progress entry on #1')
+  expect(submitted[0]).toContain('progress --on 1')
 })
 
 test('pressing focus while typing attaches the focus switch to the typed message instead', async ($, on) => {

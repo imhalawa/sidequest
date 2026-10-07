@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1",
+  "name": "panel-message-acts",
+  "description": "A panel message is acted on at once: progress is saved on the paused topic and work starts on the focus topic without asking for a go.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "[sidequest] Focus is now on #3 \"Fix the production outage\". Save a progress entry on #2 \"Book the venue\" (done, decided, next step) so it can be resumed later. Then start on the focus topic: read its notes and links, say in one line what you will do first, and do it.",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/panel-message-acts/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "saves-progress",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"progress\".*\"--on\"\\s*,\\s*\"2\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "starts-on-outage",
+      "target": "last_message",
+      "pattern": "14:00|deploy",
+      "match": "contains",
+      "flags": "i"
+    },
+    {
+      "type": "regex",
+      "name": "no-permission-ask",
+      "target": "last_message",
+      "pattern": "shall I start|should I start|want me to start|ok to proceed|go ahead\\?",
+      "match": "not_contains",
+      "flags": "i"
+    }
+  ]
+}

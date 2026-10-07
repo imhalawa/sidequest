@@ -1,0 +1,29 @@
+{
+  "current": 3,
+  "focus": 3,
+  "paused": 2,
+  "messages": 4,
+  "topics": [
+    {
+      "id": 1,
+      "title": "Plan the team offsite",
+      "parent": null,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "title": "Book the venue",
+      "parent": 1,
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "title": "Fix the production outage",
+      "parent": null,
+      "status": "open",
+      "notes": [
+        "errors started after the 14:00 deploy"
+      ]
+    }
+  ]
+}

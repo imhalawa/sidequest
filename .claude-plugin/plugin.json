@@ -1,6 +1,6 @@
 {
   "name": "sidequest",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tracks the topics a session forks into as a live, foldable tree above the prompt: focus mode, parked ideas, quick capture, progress across sessions, stats, and elected delegation.",
   "author": {
     "name": "Mohamed Halawa",

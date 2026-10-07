@@ -229,7 +229,7 @@ export const register: Register = (on, options) => {
       const paused = /paused #(\d+) (.*)/.exec(result.stdout)
       await announce(
         `[sidequest] Focus is now on #${topic.id} "${topic.title}".` +
-        (paused ? ` Save a progress entry on #${paused[1]} "${paused[2]}" (done, decided, next step) so it can be resumed later.` : '') +
+        (paused ? ` Run progress --on ${paused[1]} for "${paused[2]}" (done, decided, next step) so it can be resumed later.` : '') +
         ' Then start on the focus topic: read its notes and links, say in one line what you will do first, and do it.')
     }
     const endFocus = async () => {
@@ -433,17 +433,19 @@ export const register: Register = (on, options) => {
         {current ? <Button key="drop" hotkey="x" dimColor label={compact ? '✗' : '✗ drop'} onPress={() => run('drop', String(current.id))} /> : null}
         {current && !focus ? <Button key="focus" hotkey="f" label={compact ? '◉' : '◉ focus'} onPress={() => startFocus(current)} /> : null}
       </Box>,
-<Box key="capture-row" flexDirection="column">
+<Box key="capture-row" flexDirection="column" width="100%">
         <Box flexDirection="row" gap={1}>
           <Button key="capture" hotkey="i" label={captureOpen ? '◇ close capture' : '◇ capture'} onPress={() => update($, isCaptureOpen, value => !value)} />
           <Button key="hide-finished" hotkey="h" dimColor label={hideFinished ? `✓ show finished (${count('done') + count('dropped')})` : '✓ hide finished'}
             onPress={() => update($, isFinishedHidden, value => !value)} />
         </Box>
         {captureOpen && Input ? (
-          <Box borderStyle="round" borderColor={COLORS.parked} paddingX={1} minHeight={3} flexDirection="column">
-            <Input key="idea" autoFocus value={draftIdea} placeholder="a new idea, Enter to park it"
+          <Box borderStyle="round" borderColor={COLORS.parked} paddingX={1} minHeight={3} width="100%" flexDirection="column">
+            <Box flexGrow={1} width="100%">
+              <Input key="idea" autoFocus value={draftIdea} placeholder="a new idea, Enter to park it"
               onInput={(value: string) => { void update($, idea, () => value.slice(0, IDEA_LIMIT)) }}
               onSubmit={(value: string) => { void park(value) }} />
+            </Box>
             <Text color={draftIdea.length >= IDEA_LIMIT ? COLORS.alert : COLORS.muted}>{draftIdea.length}/{IDEA_LIMIT}</Text>
           </Box>
         ) : null}

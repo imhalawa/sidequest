@@ -1,0 +1,18 @@
+{
+  "current": 1,
+  "messages": 4,
+  "topics": [
+    {
+      "id": 1,
+      "title": "Fix the checkout timeout",
+      "parent": null,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "title": "Read the gateway logs",
+      "parent": 1,
+      "status": "open"
+    }
+  ]
+}

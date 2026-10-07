@@ -1,5 +1,7 @@
 # sidequest
 
+[![checks](https://github.com/imhalawa/sidequest/actions/workflows/checks.yml/badge.svg)](https://github.com/imhalawa/sidequest/actions/workflows/checks.yml)
+
 Keeps a tree of the topics a session forks into, shows it live above the prompt, and keeps urgent work in front while new ideas are parked, not lost.
 
 ## Install
@@ -13,6 +15,21 @@ In a Claude Code terminal session:
 Answer `y` to add the marketplace, pick a scope, then choose the settings or keep the defaults. Requires `python3` on the `PATH`.
 
 ## What you see
+
+```
+[ − ]  sidequest  ☐ 4  ✓ 3  ◇ 1  │ Fix the checkout timeout › Read the gateway logs · depth 2
+
+├─[ − ] ☐ Fix the checkout timeout
+│   ├────── ▶ Read the gateway logs
+│   ├────── ☐ Compare one order with the report  [ ⇢ delegate ]
+│   └─[ + ] ✓ 2 finished
+└─[ + ] ☐ Plan the team offsite  +2 · 1 open
+[ + ] ◇ parked ideas 1
+
+[ ↑ up ] [ ✓ done ] [ ✗ drop ] [ ◉ focus ]
+[ ◇ capture ] [ ✓ hide finished ]
+```
+
 
 A panel above the prompt:
 

@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "report-on-request",
+  "description": "A bug report request writes the report bundle and gives its path.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "the sidequest panel is acting weird, I want to report a bug",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/report-on-request/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "writes-report",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"report\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "gives-path",
+      "target": "last_message",
+      "pattern": "reports/|\\.json",
+      "match": "contains",
+      "flags": "i"
+    }
+  ]
+}
