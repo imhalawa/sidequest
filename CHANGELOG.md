@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0
+
+- Desktop app: the topic tree lives in a side panel that opens with the session; the band above the prompt becomes one line with `open topics`. `/sidequest` reopens the panel. The terminal is unchanged.
+
 ## 0.2.0
 
 - Focus: pressing `◉ focus` pauses the topic you were on and starts Claude on the focus topic at once; ending focus resumes the paused topic. Typing while you press it attaches the switch to your message instead.

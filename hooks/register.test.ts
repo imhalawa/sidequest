@@ -47,7 +47,9 @@ for (const surface of ['terminal', 'desktop'] as const) {
     on('env.get', () => ({ value: '/home/test' }))
     on('fs.read', () => ({ value: JSON.stringify(STATE) }))
 
-    const ui = await $.ui.mount({ plugin: 'sidequest', surface, component: 'AbovePrompt', props: { hasSurvey: false } as never })
+    const ui = surface === 'desktop'
+      ? await $.ui.mount({ plugin: 'sidequest', surface, component: 'Pane', requestId: 'sidequest', props: {} as never } as never)
+      : await $.ui.mount({ plugin: 'sidequest', surface, component: 'AbovePrompt', props: { hasSurvey: false } as never })
 
     expect(await ui.find({ key: 'unfocus' })).toBeDefined()
     expect(await ui.find({ key: 'delegate-3' })).toBeDefined()
@@ -334,4 +336,29 @@ test('hide finished removes finished branches and brings them back', async ($, o
   await ui.press({ key: 'hide-finished' })
 
   expect(await ui.find({ key: 'switch-4' })).toBeDefined()
+})
+
+test('on desktop the band above the prompt is one line that opens the side panel', async ($, on) => {
+  const opened: string[] = []
+  stubs(on, FOCUSABLE)
+  on('ui.open', ($, e) => {
+    opened.push((e as { id: string }).id)
+    return { value: { isOpen: true } } as never
+  })
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'desktop', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  expect(await ui.find({ key: 'switch-1' })).toBeUndefined()
+  expect(await ui.find({ key: 'open-pane' })).toBeDefined()
+
+  await ui.press({ key: 'open-pane' })
+
+  expect(opened).toEqual(['sidequest'])
+})
+
+test('on the terminal the band above the prompt keeps the full tree', async ($, on) => {
+  stubs(on, FOCUSABLE)
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  expect(await ui.find({ key: 'switch-1' })).toBeDefined()
+  expect(await ui.find({ key: 'open-pane' })).toBeUndefined()
 })

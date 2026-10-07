@@ -77,6 +77,7 @@ function look(state: State, topic: Topic) {
 }
 
 const TOOL = 'mcp__sidequest__topics'
+const PANE = 'sidequest'
 
 export const register: Register = (on, options) => {
   const depthMatch = /\d+/.exec(String(options.depth_alert ?? ''))
@@ -95,8 +96,17 @@ export const register: Register = (on, options) => {
         required: ['args'],
       },
     })
+    await $.command.register({ name: 'sidequest', description: 'Open the sidequest topic tree in a side panel.' })
+    if (e.surface === 'desktop') {
+      void $.ui.open({ id: PANE, title: 'sidequest' })
+    }
     await $.command.register({ name: 'sidequest-report', description: 'Write a sidequest bug report bundle: plugin version, panel and Claude actions, and the topic tree. Add "redact" to hide titles and notes.' })
     return next(e)
+  })
+
+  on('command.run', { command: 'sidequest' }, async $ => {
+    await $.ui.open({ id: PANE, title: 'sidequest' })
+    return { text: 'sidequest panel opened.' }
   })
 
   on('command.run', { command: 'sidequest-report' }, async ($, e) => {
@@ -183,7 +193,11 @@ export const register: Register = (on, options) => {
     return result
   }).catch(($, e, next) => next(e))
 
-  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+  on('ui.render', async ($, e, next) => {
+    const inPane = e.component === 'Pane' && e.requestId === PANE
+    if (e.component !== 'AbovePrompt' && !inPane) {
+      return next(e)
+    }
     await read($, version)
     const session = await $.session.id()
     const path = `${await $.env.get('HOME')}/.claude/sidequest/${session}.json`
@@ -193,7 +207,7 @@ export const register: Register = (on, options) => {
     } catch {
       state = { current: null, topics: [] }
     }
-    if (e.props.hasSurvey) {
+    if (e.component === 'AbovePrompt' && e.props.hasSurvey) {
       return next(e)
     }
     if (state.topics.length === 0) {
@@ -202,6 +216,20 @@ export const register: Register = (on, options) => {
         <EmptyBox key="empty" borderStyle="round" borderColor={COLORS.brand} paddingX={1}>
           <EmptyText><EmptyText bold color={COLORS.brand}>sidequest</EmptyText><EmptyText color={COLORS.muted}> · no topics yet · start a message with + to park an idea</EmptyText></EmptyText>
         </EmptyBox>
+      )
+    }
+
+    if (e.component === 'AbovePrompt' && e.surface === 'desktop') {
+      const { Box: StripBox, Text: StripText, Button: StripButton } = $.ui.resolve(e)
+      const now_ = state.topics.find(topic => topic.id === state.current)
+      const openCount = state.topics.filter(topic => topic.status === 'open').length
+      return (
+        <StripBox key="strip" flexDirection="row" gap={1}>
+          <StripText bold color={COLORS.brand}>sidequest</StripText>
+          <StripText color={COLORS.open}>☐ {openCount}</StripText>
+          {now_ ? <StripText color={COLORS.current}>▶ {now_.title}</StripText> : null}
+          <StripButton key="open-pane" plain label="open topics" onPress={() => { void $.ui.open({ id: PANE, title: 'sidequest' }) }} />
+        </StripBox>
       )
     }
 
@@ -317,9 +345,9 @@ export const register: Register = (on, options) => {
         <Button key="unfocus" plain dimColor label="end focus" onPress={() => endFocus()} />
       </Box>
     ) : null
-    const frame = (children: RenderChildren) => (
-      <Box flexDirection="column" borderStyle="round" borderColor={focus ? COLORS.alert : COLORS.brand} paddingX={1}>{children}</Box>
-    )
+    const frame = (children: RenderChildren) => (inPane
+      ? <Box flexDirection="column" paddingX={1}>{children}</Box>
+      : <Box flexDirection="column" borderStyle="round" borderColor={focus ? COLORS.alert : COLORS.brand} paddingX={1}>{children}</Box>)
     if (collapsed || isTiny) {
       return frame(isTiny ? <Text><Text bold color={COLORS.current}>▶ {fit(current ? current.title : 'sidequest', Math.max(4, columns - counts.length - 8))}</Text><Text color={COLORS.muted}> · {counts}</Text></Text> : [header, focusLine])
     }

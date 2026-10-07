@@ -31,7 +31,7 @@ Answer `y` to add the marketplace, pick a scope, then choose the settings or kee
 ```
 
 
-A panel above the prompt:
+In the terminal, a panel above the prompt. In the desktop app, the same tree in a side panel that opens with the session, and a one-line strip above the prompt with `open topics`; `/sidequest` reopens the side panel.
 
 | Part | Does |
 |---|---|
