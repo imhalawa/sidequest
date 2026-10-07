@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.1",
+  "name": "fork-under-earlier-branch",
+  "description": "A new question about an earlier, still-open topic is forked under that topic (#1).",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "one more question about Sarah's CSV export: does a 17.9 KB CSV fit in one Slack message?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/fork-under-earlier-branch/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "forks-under-1",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\".*\"--under\"\\s*,\\s*\"1\"",
+      "min": 1
+    }
+  ]
+}

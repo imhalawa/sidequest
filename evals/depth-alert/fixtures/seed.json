@@ -1,0 +1,24 @@
+{
+  "current": 3,
+  "messages": 4,
+  "topics": [
+    {
+      "id": 1,
+      "title": "Fix the production outage",
+      "parent": null,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "title": "Read the error logs",
+      "parent": 1,
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "title": "Check the log retention settings",
+      "parent": 2,
+      "status": "open"
+    }
+  ]
+}

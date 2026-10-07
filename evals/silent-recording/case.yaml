@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1",
+  "name": "silent-recording",
+  "description": "The topic is recorded but the reply never talks about the recording.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "new question: what is the difference between a list and a tuple in python?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/silent-recording/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "forks",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "no-recording-talk",
+      "target": "last_message",
+      "pattern": "sidequest|recorded|forked|new topic|tracking|parked it",
+      "match": "not_contains",
+      "flags": "i"
+    },
+    {
+      "type": "regex",
+      "name": "no-ids",
+      "target": "last_message",
+      "pattern": "#[0-9]",
+      "match": "not_contains"
+    }
+  ]
+}

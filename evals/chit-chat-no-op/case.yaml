@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.1",
+  "name": "chit-chat-no-op",
+  "description": "Small talk records nothing.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "hmm, let me think about that for a second",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/chit-chat-no-op/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "no-cli",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"(fork|done|now|drop)\"",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}

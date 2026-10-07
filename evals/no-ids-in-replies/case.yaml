@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.1",
+  "name": "no-ids-in-replies",
+  "description": "An ordinary reply shows no #ids.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "what does a DynamoDB GSI cost roughly?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/no-ids-in-replies/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "regex",
+      "name": "no-ids",
+      "target": "last_message",
+      "pattern": "(?<![\\w&])#[0-9]+\\b",
+      "match": "not_contains"
+    }
+  ]
+}

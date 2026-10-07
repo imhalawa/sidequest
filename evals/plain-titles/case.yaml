@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.1",
+  "name": "plain-titles",
+  "description": "The fork title names the action and its object, specific enough to read on its own later, in one short line.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "I keep getting a 401 from our orders API when I call it from Postman, can you help me debug it?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {}
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "forks",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 1
+    },
+    {
+      "type": "tool_used",
+      "name": "no-one-word-title",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"\\s*,\\s*\"[^\" ]+\"",
+      "min": 0,
+      "max": 0
+    },
+    {
+      "type": "llm",
+      "name": "descriptive-title",
+      "focus": "last_message",
+      "criteria": "Judge the new topic's title from the reply context: if the reply mentions or implies the topic, it is about debugging a 401 from the orders API in Postman. The reply itself answers helpfully."
+    }
+  ]
+}

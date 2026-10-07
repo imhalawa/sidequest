@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "done-on-finish",
+  "description": "The finished topic #2 is marked done and nothing is forked.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "great, that fully answers my list comprehension question, thanks",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/done-on-finish/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "marks-done",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"done\"\\s*,\\s*\"2\"",
+      "min": 1
+    },
+    {
+      "type": "tool_used",
+      "name": "no-fork",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}

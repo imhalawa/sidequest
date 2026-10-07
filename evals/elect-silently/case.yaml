@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "elect-silently",
+  "description": "A topic with enough notes and links for a sub-agent is elected, without mentioning it.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "what's still left on the report comparison?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/elect-silently/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "elects",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"elect\"\\s*,\\s*\"2\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "no-delegation-talk",
+      "target": "last_message",
+      "pattern": "elect|delegab",
+      "match": "not_contains",
+      "flags": "i"
+    }
+  ]
+}

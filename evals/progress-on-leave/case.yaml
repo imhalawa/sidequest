@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.1",
+  "name": "progress-on-leave",
+  "description": "Leaving a topic saves a progress entry on it.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "ok, back to the order totals question as a whole",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/progress-on-leave/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "saves-progress",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"progress\".*\"--on\"\\s*,\\s*\"2\"",
+      "min": 1
+    }
+  ]
+}

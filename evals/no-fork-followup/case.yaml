@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.1",
+  "name": "no-fork-followup",
+  "description": "A follow-up on the current topic records nothing.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "can you show one more decorator example, this time one that takes arguments?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/no-fork-followup/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "no-fork",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}

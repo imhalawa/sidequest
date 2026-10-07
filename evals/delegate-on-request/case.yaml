@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "delegate-on-request",
+  "description": "Delegating an elected topic builds the brief, starts a sub-agent, and marks it running.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "delegate the report comparison",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics",
+      "Agent"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/delegate-on-request/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "builds-brief",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"brief\"\\s*,\\s*\"2\"",
+      "min": 1
+    },
+    {
+      "type": "tool_used",
+      "name": "marks-running",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"delegation\"\\s*,\\s*\"2\"\\s*,\\s*\"running\"",
+      "min": 1
+    }
+  ]
+}

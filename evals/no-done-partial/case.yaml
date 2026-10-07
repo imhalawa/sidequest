@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.1",
+  "name": "no-done-partial",
+  "description": "A half-finished task is not marked done.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "ok I created the folder, but I haven't activated the virtualenv yet. what's next?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/no-done-partial/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "not-done",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"done\"",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "current": null,
+  "messages": 9,
+  "cwd": "/elsewhere",
+  "topics": [
+    {
+      "id": 1,
+      "title": "Fix missing totals for refunded orders",
+      "parent": null,
+      "status": "open",
+      "progress": [
+        {
+          "session": "past-session",
+          "at": "2026-10-01T10:00:00",
+          "text": "fixed 25K; 4K refunded orders left; next: patch the old service"
+        }
+      ],
+      "sessions": [
+        "past-session"
+      ],
+      "notes": [
+        "refunded orders never reach the database"
+      ]
+    }
+  ]
+}

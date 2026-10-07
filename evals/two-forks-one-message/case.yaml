@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.1",
+  "name": "two-forks-one-message",
+  "description": "Each of the two new questions gets its own fork.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "two new questions: what is a Kafka partition, and what is a DynamoDB GSI?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/two-forks-one-message/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "forks-twice",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 2
+    }
+  ]
+}

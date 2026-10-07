@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "drop-abandoned",
+  "description": "An abandoned topic is dropped, not marked done.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "forget the topic tracker hook, we don't need it anymore",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/drop-abandoned/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "drops-3",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"drop\"\\s*,\\s*\"3\"",
+      "min": 1
+    },
+    {
+      "type": "tool_used",
+      "name": "not-done",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"done\"\\s*,\\s*\"3\"",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}

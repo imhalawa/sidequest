@@ -1,0 +1,35 @@
+{
+  "name": "sidequest",
+  "version": "0.1.0",
+  "description": "Tracks the topics a session forks into as a live, foldable tree above the prompt: focus mode, parked ideas, quick capture, progress across sessions, stats, and elected delegation.",
+  "author": {
+    "name": "Mohamed Halawa",
+    "email": "imhalawa@outlook.com"
+  },
+  "userConfig": {
+    "depth_alert": {
+      "type": "string",
+      "title": "Depth alert",
+      "description": "How deep you may fork before Claude reminds you where you started.",
+      "options": [
+        "2 levels: strict",
+        "3 levels: balanced",
+        "4 levels: relaxed",
+        "off"
+      ],
+      "default": "3 levels: balanced"
+    },
+    "reminder_limit": {
+      "type": "string",
+      "title": "Parked ideas per reminder",
+      "description": "How many parked ideas a reminder lists, most valuable first.",
+      "options": [
+        "top 3",
+        "top 5",
+        "all"
+      ],
+      "default": "all"
+    }
+  },
+  "types": "./types/index.d.ts"
+}

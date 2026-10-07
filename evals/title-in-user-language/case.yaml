@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.1",
+  "name": "title-in-user-language",
+  "description": "A Dutch message gets a Dutch title.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "Kun je me helpen? Mijn bestellingenbestand geeft een fout bij het inlezen.",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {}
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "dutch-title",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\".*(bestelling|bestand|fout|inlezen)",
+      "min": 1
+    }
+  ]
+}

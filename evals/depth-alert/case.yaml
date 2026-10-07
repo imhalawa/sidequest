@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "depth-alert",
+  "description": "At 3 levels deep the reply opens by naming the topic the user started from.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "what does the retention setting default to?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/depth-alert/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "regex",
+      "name": "names-the-start",
+      "target": "last_message",
+      "pattern": "production outage",
+      "match": "contains"
+    },
+    {
+      "type": "tool_used",
+      "name": "no-fork",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 0,
+      "max": 0
+    }
+  ]
+}

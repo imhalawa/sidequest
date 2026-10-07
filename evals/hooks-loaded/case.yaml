@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.1",
+  "name": "hooks-loaded",
+  "description": "With the plugin installed, a fresh session records its first topic without being asked.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "help me pick a name for a function that parses dates from log lines",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {}
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "records-the-first-topic",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 1,
+      "arm": "with-only"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "current": 2,
+  "messages": 6,
+  "topics": [
+    {
+      "id": 1,
+      "title": "Find why orders miss their totals",
+      "parent": null,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "title": "Compare one order with the report",
+      "parent": 1,
+      "status": "open",
+      "entered": "2026-10-07T09:00:00",
+      "messages": 5,
+      "notes": [
+        "order 4711 is correct in the database but missing in the report"
+      ]
+    }
+  ]
+}

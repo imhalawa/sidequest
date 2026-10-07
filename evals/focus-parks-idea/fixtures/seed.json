@@ -1,0 +1,25 @@
+{
+  "current": 2,
+  "focus": 1,
+  "messages": 4,
+  "topics": [
+    {
+      "id": 1,
+      "title": "Fix the production outage",
+      "parent": null,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "title": "Restart the web pods",
+      "parent": 1,
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "title": "Plan the team offsite",
+      "parent": null,
+      "status": "open"
+    }
+  ]
+}

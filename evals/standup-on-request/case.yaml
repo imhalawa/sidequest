@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "name": "standup-on-request",
+  "description": "Asked for a standup, the reply runs standup and shows it.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "give me my standup",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/standup-on-request/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "runs-standup",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"standup\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "shows-it",
+      "target": "last_message",
+      "pattern": "Since \\d{4}-\\d{2}-\\d{2}",
+      "match": "contains"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1",
+  "name": "done-then-fork",
+  "description": "The finished topic is marked done and the new question is forked, in that order.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "great, that answers it. next: how do I read a CSV file in python?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/done-then-fork/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "marks-done",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"done\"\\s*,\\s*\"2\"",
+      "min": 1
+    },
+    {
+      "type": "tool_used",
+      "name": "forks",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 1
+    },
+    {
+      "type": "tool_order",
+      "name": "done-before-fork",
+      "before": {
+        "tool": "mcp__sidequest__topics",
+        "input_match": "\"done\"\\s*,\\s*\"2\""
+      },
+      "after": {
+        "tool": "mcp__sidequest__topics",
+        "input_match": "\"fork\""
+      }
+    }
+  ]
+}

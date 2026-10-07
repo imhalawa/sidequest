@@ -1,0 +1,16 @@
+{
+  "name": "sidequest",
+  "description": "sidequest: a live topic tree for Claude Code that keeps urgent work in front and parks new ideas instead of losing them.",
+  "owner": {
+    "name": "Mohamed Halawa",
+    "email": "imhalawa@outlook.com"
+  },
+  "plugins": [
+    {
+      "name": "sidequest",
+      "source": "./",
+      "description": "Tracks the topics a session forks into as a live, foldable tree above the prompt: focus mode, parked ideas, quick capture, progress across sessions, stats, and elected delegation.",
+      "keywords": ["focus", "topics", "context", "hooks"]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "current": 3,
+  "messages": 2,
+  "topics": [
+    {
+      "id": 1,
+      "title": "Sarah's CSV export",
+      "parent": null,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "title": "fetch the CSV",
+      "parent": 1,
+      "status": "done"
+    },
+    {
+      "id": 3,
+      "title": "topic tracker hook",
+      "parent": null,
+      "status": "open"
+    }
+  ]
+}

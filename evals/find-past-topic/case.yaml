@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "find-past-topic",
+  "description": "A topic worked on before is found and the three ways back are offered.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "let's continue on the refunded orders bug from last week",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/find-past-topic/fixtures"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "searches",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"find\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "offers-progress",
+      "target": "last_message",
+      "pattern": "progress|left off|25K",
+      "match": "contains",
+      "flags": "i"
+    }
+  ]
+}

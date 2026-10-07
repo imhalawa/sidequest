@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "name": "focus-leave-asks-reason",
+  "description": "Leaving focus without a reason does not switch; the reply asks why the offsite is more urgent than the outage.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "switch to planning the team offsite",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/focus-leave-asks-reason/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "no-bare-switch",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"now\"\\s*,\\s*\"3\"(?!.*--reason)",
+      "min": 0,
+      "max": 0
+    },
+    {
+      "type": "llm",
+      "name": "asks-why",
+      "focus": "last_message",
+      "criteria": "The reply asks the user why the offsite is more urgent than the production outage, instead of switching."
+    }
+  ]
+}

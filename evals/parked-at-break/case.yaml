@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.1",
+  "name": "parked-at-break",
+  "description": "Finishing the focus topic is a natural break: the reply mentions the parked idea.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "the outage is fixed, mark it done",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/parked-at-break/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "marks-done",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"done\"\\s*,\\s*\"1\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "mentions-idea",
+      "target": "last_message",
+      "pattern": "cache|price lookups",
+      "match": "contains",
+      "flags": "i"
+    }
+  ]
+}

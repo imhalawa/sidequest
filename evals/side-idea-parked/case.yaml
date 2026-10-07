@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1",
+  "name": "side-idea-parked",
+  "description": "A side thought inside a task message is parked, and the task is answered.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "show me a decorator that takes arguments, oh and we should probably move this project to uv someday",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/side-idea-parked/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "parks",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"park\"",
+      "min": 1
+    },
+    {
+      "type": "tool_used",
+      "name": "no-fork",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\"",
+      "min": 0,
+      "max": 0
+    },
+    {
+      "type": "regex",
+      "name": "answers-task",
+      "target": "last_message",
+      "pattern": "def |decorator",
+      "match": "contains",
+      "flags": "i"
+    }
+  ]
+}

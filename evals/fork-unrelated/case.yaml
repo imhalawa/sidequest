@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.1",
+  "name": "fork-unrelated",
+  "description": "The unrelated subject is forked at the root.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "different subject entirely: what is a good name for a grey cat?",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/fork-unrelated/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "forks-at-root",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"fork\".*\"--under\"\\s*,\\s*\"root\"",
+      "min": 1
+    }
+  ]
+}

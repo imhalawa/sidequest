@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1",
+  "name": "show-on-request",
+  "description": "Asked for the topics off the 7-message cycle, the reply prints the tree.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "show me my topics",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/show-on-request/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "runs-show",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"show\"",
+      "min": 1
+    },
+    {
+      "type": "regex",
+      "name": "prints-the-tree",
+      "target": "last_message",
+      "pattern": "[├└]── ☐ Sarah's CSV export",
+      "match": "contains"
+    }
+  ]
+}
