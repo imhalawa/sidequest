@@ -70,14 +70,22 @@ export const register: Register = (on, options) => {
       description:
         'Records and reads the sidequest topic tree for this session. Pass the command and its arguments as args, ' +
         'e.g. ["fork", "Fix the login timeout"] (under the current topic), ["done", "3"], ["park", "cache price lookups"], ["show", "--ids"]. ' +
-        'Commands: fork, done, drop, now, rename, note, progress, link, park, focus, priority, elect, brief, delegation, carry, back, show, find, parked, standup, stats.',
+        'Commands: fork, done, drop, now, rename, note, progress, link, park, focus, priority, elect, brief, delegation, carry, back, show, find, parked, standup, stats, report.',
       inputSchema: {
         type: 'object',
         properties: { args: { type: 'array', items: { type: 'string' }, description: 'The command, then its arguments' } },
         required: ['args'],
       },
     })
+    await $.command.register({ name: 'sidequest-report', description: 'Write a sidequest bug report bundle: plugin version, panel and Claude actions, and the topic tree. Add "redact" to hide titles and notes.' })
     return next(e)
+  })
+
+  on('command.run', { command: 'sidequest-report' }, async ($, e) => {
+    const session = await $.session.id()
+    const redact = String(e.args ?? '').includes('redact') ? ['--redact'] : []
+    const run = await $.process.run(['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session, 'report', ...redact])
+    return { text: run.exitCode === 0 ? run.stdout.trim() : run.stderr.trim() }
   })
 
   on('tool.call', { tool: TOOL }, async ($, e) => {
@@ -104,7 +112,7 @@ export const register: Register = (on, options) => {
     }
     const session = await $.session.id()
     const result = await $.process.run(
-      ['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session, 'park', e.text.slice(2)])
+      ['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session, '--via', 'capture', 'park', e.text.slice(2)])
     await update($, version, value => value + 1)
     $.ui.toast(result.exitCode === 0 ? `parked: ${e.text.slice(2)}` : result.stderr.trim())
     return { drop: 'parked by sidequest' }
@@ -127,7 +135,7 @@ export const register: Register = (on, options) => {
     if (!topic) {
       return result
     }
-    const cli = ['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session]
+    const cli = ['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session, '--via', 'sub-agent']
     const findings = 'answer' in e && typeof e.answer === 'string' ? e.answer.trim() : ''
     if (findings) {
       await $.process.run([...cli, 'note', `sub-agent: ${findings.slice(0, 2000)}`, '--on', String(topic.id)])
@@ -145,7 +153,7 @@ export const register: Register = (on, options) => {
     const before = e.text.trim()
     if (after.trim() === '' && before.includes(' ') && !before.startsWith('/') && !before.startsWith('+ ')) {
       const session = await $.session.id()
-      await $.process.run(['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session, 'park', before])
+      await $.process.run(['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session, '--via', 'draft', 'park', before])
       await update($, version, value => value + 1)
       $.ui.toast('cleared draft parked as an idea')
     }
@@ -174,7 +182,7 @@ export const register: Register = (on, options) => {
       )
     }
 
-    const cli = ['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session]
+    const cli = ['python3', `${$.plugin.root}/scripts/topics.py`, '--session', session, '--via', 'panel']
     const run = async (...args: string[]) => {
       const result = await $.process.run([...cli, ...args])
       await update($, version, value => value + 1)
@@ -215,16 +223,23 @@ export const register: Register = (on, options) => {
     const header = (
       <Box flexDirection="row" gap={1}>
         <Button key="collapse" hotkey="c" label={collapsed ? '+' : '−'} onPress={() => update($, isCollapsed, value => !value)} />
-        <Text bold color="cyan">sidequest</Text>
-        <Text color="yellow">☐ {count('open')}</Text>
-        <Text color="green">✓ {count('done')}</Text>
-        {ideas.length > 0 ? <Text color="magenta">◇ {ideas.length}</Text> : null}
-        {current ? <Text color={levels >= depthAlert ? 'red' : 'cyan'}>▶ {fit(crumb, crumbRoom)} · depth {levels}</Text> : null}
+        <Text bold color="black" backgroundColor={focus ? 'red' : 'cyan'}> sidequest </Text>
+        <Text><Text color="yellow">☐</Text><Text dimColor> {count('open')}</Text></Text>
+        <Text><Text color="green">✓</Text><Text dimColor> {count('done')}</Text></Text>
+        {ideas.length > 0 ? <Text><Text color="magenta">◇</Text><Text dimColor> {ideas.length}</Text></Text> : null}
+        {current ? (
+          <Text>
+            <Text dimColor>│ </Text>
+            <Text color="cyan">{fit(crumb, crumbRoom)}</Text>
+            <Text color={levels >= depthAlert ? 'red' : 'gray'} bold={levels >= depthAlert}> · depth {levels}</Text>
+          </Text>
+        ) : null}
       </Box>
     )
     const focusLine = focus ? (
       <Box flexDirection="row" gap={1}>
-        <Text color="red" bold>◉ focus: {fit(focus.title, Math.max(8, columns - 20))}</Text>
+        <Text bold color="white" backgroundColor="red"> ◉ FOCUS </Text>
+        <Text bold color="red">{fit(focus.title, Math.max(8, columns - 26))}</Text>
         <Button key="unfocus" plain dimColor label="end focus" onPress={() => run('focus', '--off')} />
       </Box>
     ) : null
@@ -242,11 +257,30 @@ export const register: Register = (on, options) => {
     const flip = (id: number) =>
       update($, toggled, list => (list.includes(id) ? list.filter(item => item !== id) : [...list, id]))
 
+    const inFocus = (topic: Topic) => !focus || chain(state, topic).some(item => item.id === focus.id)
+    const isClickable = (topic: Topic) =>
+      topic.id !== state.current && topic.delegation?.status !== 'running' && inFocus(topic) &&
+      (topic.status === 'open' || topic.status === 'parked')
+    const openUp = current ? chain(state, current).slice(0, -1).reverse().find(item => item.status === 'open') : undefined
+    const hasOpenChildren = current ? descendants(state, current.id).some(item => item.status === 'open') : false
+    const switchTo = async (id: number) => {
+      const target = find(state, id)
+      const nextPath = new Set(chain(state, target).map(topic => topic.id))
+      const keep = flipped.filter(item => item < 0)
+      for (const topic of state.topics) {
+        if (!descendants(state, topic.id).length) continue
+        const nextDefault = foldedByDefault(state, topic) || (!nextPath.has(topic.id) && topic.id !== state.focus)
+        if (isFolded(topic) !== nextDefault) keep.push(topic.id)
+      }
+      await update($, toggled, () => keep)
+      await run('now', String(id))
+    }
+
     const rows: RenderChildren[] = []
     const row = (key: string, prefix: string, isLast: boolean, lead: RenderChildren, body: RenderChildren) =>
       rows.push(
         <Box key={key} flexDirection="row">
-          <Text dimColor>{prefix + (isLast ? '└─' : '├─')}</Text>
+          <Text color="gray" dimColor>{prefix + (isLast ? '└─' : '├─')}</Text>
           {lead}
           {body}
         </Box>,
@@ -268,11 +302,16 @@ export const register: Register = (on, options) => {
         row(`topic-${topic.id}`, prefix, isLast,
           hidden.length > 0
             ? <Button key={`fold-${topic.id}`} dimColor label={folded ? '+' : '−'} onPress={() => flip(topic.id)} />
-            : <Text dimColor>─────</Text>,
+            : <Text color="gray" dimColor>─────</Text>,
           <Box flexDirection="row">
-            <Text color={topic.id === state.focus ? 'red' : style.color}> {style.glyph} </Text>
-            <Button key={`switch-${topic.id}`} plain dimColor={topic.status !== 'open' || isStale(topic)} label={fit(topic.title, Math.max(8, room))}
-              onPress={() => run('now', String(topic.id))} />
+            <Text bold={topic.id === state.current} color={topic.id === state.focus ? 'red' : style.color}> {style.glyph} </Text>
+            {!isClickable(topic)
+              ? <Box key={`switch-${topic.id}`}>
+                  <Text bold={topic.id === state.current} color={topic.id === state.current ? 'cyan' : undefined}
+                    dimColor={topic.id !== state.current} strikethrough={topic.status === 'dropped'}>{fit(topic.title, Math.max(8, room))}</Text>
+                </Box>
+              : <Button key={`switch-${topic.id}`} plain dimColor={topic.status !== 'open' || isStale(topic)}
+                  hover={{ color: 'cyan' }} label={fit(topic.title, Math.max(8, room))} onPress={() => switchTo(topic.id)} />}
             {folded ? <Text dimColor> (+{hidden.length}{hiddenOpen > 0 ? `, ${hiddenOpen} open` : ''})</Text> : null}
             {canDelegate ? <Button key={`delegate-${topic.id}`} label={topic.title.length > room ? '⇢' : '⇢ delegate'} onPress={() => delegate(topic)} /> : null}
           </Box>)
@@ -292,12 +331,15 @@ export const register: Register = (on, options) => {
       <Box flexDirection="column">
         <Box flexDirection="row" gap={1}>
           <Button key="parked" hotkey="p" label={parkedOpen ? '−' : '+'} onPress={() => update($, isParkedOpen, value => !value)} />
-          <Text color="magenta">◇ parked ideas ({ideas.length})</Text>
+          <Text color="magenta" bold>◇ parked ideas</Text>
+          <Text dimColor>{ideas.length}</Text>
         </Box>
         {parkedOpen ? ideas.map(idea => (
           <Box key={`idea-${idea.id}`} flexDirection="row">
             <Text dimColor>      ◇ </Text>
-            <Button key={`open-${idea.id}`} plain label={fit(idea.title, Math.max(8, columns - 12))} onPress={() => run('now', String(idea.id))} />
+            {isClickable(idea)
+              ? <Button key={`open-${idea.id}`} plain hover={{ color: 'magenta' }} label={fit(idea.title, Math.max(8, columns - 12))} onPress={() => switchTo(idea.id)} />
+              : <Box key={`open-${idea.id}`}><Text dimColor>{fit(idea.title, Math.max(8, columns - 12))}</Text></Box>}
           </Box>
         )) : null}
       </Box>
@@ -311,9 +353,9 @@ export const register: Register = (on, options) => {
       <Box key="tree" flexDirection="column" marginTop={1}>{rows}</Box>,
       parkedSection,
       <Box key="actions" flexDirection="row" gap={1} marginTop={1}>
-        {current ? <Button key="up" hotkey="u" label={compact ? '↑' : '↑ up'} onPress={() => current.parent !== null && run('now', String(current.parent))} /> : null}
-        {current ? <Button key="done" hotkey="d" label={compact ? '✓' : '✓ done'} onPress={() => run('done', String(current.id))} /> : null}
-        {current ? <Button key="drop" hotkey="x" label={compact ? '✗' : '✗ drop'} onPress={() => run('drop', String(current.id))} /> : null}
+        {openUp && inFocus(openUp) ? <Button key="up" hotkey="u" dimColor label={compact ? '↑' : '↑ up'} onPress={() => switchTo(openUp.id)} /> : null}
+        {current && !hasOpenChildren ? <Button key="done" hotkey="d" variant="primary" label={compact ? '✓' : '✓ done'} onPress={() => run('done', String(current.id))} /> : null}
+        {current ? <Button key="drop" hotkey="x" dimColor label={compact ? '✗' : '✗ drop'} onPress={() => run('drop', String(current.id))} /> : null}
         {current && !focus ? <Button key="focus" hotkey="f" label={compact ? '◉' : '◉ focus'} onPress={() => run('focus', String(current.id))} /> : null}
       </Box>,
       Input ? (

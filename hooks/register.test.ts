@@ -18,7 +18,7 @@ test('a prompt that starts with "+ " is parked and never reaches the model', asy
 
   expect(reachedModel).toBe(false)
   expect(result).toEqual({ drop: 'parked by sidequest' })
-  expect(parked[0].slice(-4)).toEqual(['--session', 'test-session', 'park', 'cache price lookups'])
+  expect(parked[0].slice(-6)).toEqual(['--session', 'test-session', '--via', 'capture', 'park', 'cache price lookups'])
 })
 
 test('an ordinary prompt passes through untouched', async ($, on) => {
@@ -178,4 +178,48 @@ test('a session with no topics yet shows a one-line empty state', async ($, on) 
 
   expect(await ui.find({ key: 'empty' })).toBeDefined()
   expect(await ui.find({ key: 'collapse' })).toBeUndefined()
+})
+
+test('clicking a topic switches to it without refolding the tree', async ($, on) => {
+  const live = JSON.parse(JSON.stringify(BRANCHY))
+  const calls: string[][] = []
+  on('session.id', () => ({ value: 'test-session' }))
+  on('env.get', () => ({ value: '/home/test' }))
+  on('fs.read', () => ({ value: JSON.stringify(live) }))
+  on('process.run', ($, e) => {
+    const args = [...e.argv]
+    calls.push(args)
+    if (args.at(-2) === 'now') live.current = Number(args.at(-1))
+    return { value: { exitCode: 0, stdout: '', stderr: '' } }
+  })
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+  await ui.press({ key: 'fold-6' })
+  const before = Boolean(await ui.find({ key: 'switch-2' }))
+
+  await ui.press({ key: 'switch-7' })
+
+  expect(calls.at(-1)?.slice(-2)).toEqual(['now', '7'])
+  expect(Boolean(await ui.find({ key: 'switch-2' }))).toBe(before)
+})
+
+test('finished, dropped, and running topics cannot be clicked', async ($, on) => {
+  stubs(on, {
+    current: 1,
+    topics: [
+      { id: 1, title: 'Fix the checkout timeout', parent: null, status: 'open', sessions: ['test-session'] },
+      { id: 2, title: 'Restart the web pods', parent: 1, status: 'done' },
+      { id: 3, title: 'Rewrite the cache', parent: 1, status: 'dropped' },
+      { id: 4, title: 'Compare one order with the report', parent: 1, status: 'open', delegable: true, delegation: { status: 'running', agent: 'a1' } },
+      { id: 5, title: 'Read the gateway logs', parent: 1, status: 'open', sessions: ['test-session'] },
+    ],
+  })
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+  await ui.press({ key: 'fold-closed--2' })
+  const buttons = (await ui.findAll({ type: 'Button' })).map(found => (found as { key?: string }).key)
+
+  expect(buttons).not.toContain('switch-2')
+  expect(buttons).not.toContain('switch-3')
+  expect(buttons).not.toContain('switch-4')
+  expect(buttons).toContain('switch-5')
+  expect(buttons).not.toContain('done')
 })

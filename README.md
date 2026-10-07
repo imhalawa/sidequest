@@ -51,6 +51,23 @@ The panel fits the terminal: titles shorten with `…`, buttons shrink to their 
 
 Installed or reloaded in a session that is already open, the plugin sends its full instructions with your next message.
 
+## Rules the panel keeps
+
+| Case | What happens |
+|---|---|
+| A finished, dropped, or running topic | Shown, not clickable |
+| Focus is on | Only topics inside the focus topic are clickable |
+| `↑ up` | Goes to the nearest open parent; hidden when there is none |
+| `✓ done` on a topic with open subtopics | Hidden; the CLI refuses it and names the subtopics |
+| `✗ drop` on a topic with open subtopics | Drops the whole branch |
+| Clicking a topic | Switches to it; the folds you see stay as they are |
+
+## Reporting a bug
+
+Run `/sidequest-report` (or `/sidequest-report redact` to hide titles and notes). It writes one file with the plugin version, every panel and Claude action with its result, and the topic tree, and prints its path. Attach that file to the issue.
+
+Every action is logged per session in `~/.claude/sidequest/logs/`, tagged with where it came from: `panel`, `claude`, `capture`, `draft`, or `sub-agent`.
+
 ## Commands
 
 Claude records through the plugin's `topics` tool (`mcp__sidequest__topics`), so Bash sandboxing never blocks it. The same commands work from a shell, `python3 scripts/topics.py --session ID <command>`:
@@ -65,7 +82,7 @@ Claude records through the plugin's `topics` tool (`mcp__sidequest__topics`), so
 | `carry <session> [--dismiss]`, `back <session> <id> --mode fresh\|progress\|resume` | Past sessions |
 | `show [--ids]` | The tree |
 
-Without `--session`: `find "<words>"`, `parked`, `standup [--since YYYY-MM-DD]`, `stats`.
+Without `--session`: `find "<words>"`, `parked`, `standup [--since YYYY-MM-DD]`, `stats`. With it: `report [--redact]`.
 
 ## Settings
 

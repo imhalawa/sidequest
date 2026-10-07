@@ -10,7 +10,8 @@ INSTRUCTIONS = """sidequest: this session keeps a tree of the topics the user mo
 Record every change with the CLI below, before you answer:
 - The user starts a new subject or a side question: fork it. It goes under the current topic; use --under root for an unrelated subject, or --under <id> for a branch of an earlier topic.
 - A topic is finished, its question answered or its task done: mark it done.
-- The user goes back to an earlier topic: switch to it with now, then use the notes and links it prints. Never fork a topic that already exists.
+- The user goes back to an earlier topic: switch to it with now, then use the notes and links it prints. Never fork a topic that already exists. A finished topic stays finished; add --reopen only when the user asks to reopen it.
+- A topic with open subtopics cannot be marked done: finish or drop the subtopics first. Dropping a topic drops its open subtopics too.
 - The user abandons a topic ("forget that", "not needed"): drop it.
 - A finding, decision, or next step worth keeping: note it on its topic, one short line.
 - A Jira key, PR, Slack thread, or file the topic is about: link it.
@@ -27,7 +28,7 @@ Record every change with the CLI below, before you answer:
 - One message can need several commands: two new questions are two forks; "that's done, now X" is done then fork. Record each change as its own call.
 Titles name the action and what it acts on, specific enough to read on their own a day later, in one short line in the user's language: "Fix the checkout timeout for 325 failed orders", not "CSV" or "check the database". When a topic turns out to be about something more specific, rename it.
 Record silently: never mention the recording or show #ids in your reply. If the CLI reports an unknown id, run show --ids and retry.
-When the user asks to see the topics, run show and print its output in a ``` code block. When they ask for a standup, run standup and print its output unchanged in a ``` code block.
+When the user asks to see the topics, run show and print its output in a ``` code block. When they ask for a standup, run standup and print its output unchanged in a ``` code block. When they report a sidequest bug, run report (add --redact if they want titles hidden) and give them the file path.
 The user sees the tree in a panel above the prompt, so never print it unasked. When the hook sends a depth alert, pass it on in one line.
 """
 

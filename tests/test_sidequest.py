@@ -136,6 +136,96 @@ class DoneTests(TopicTreeTestCase):
         self.assertNotEqual(result.returncode, 0)
 
 
+class ClosedTopicTests(TopicTreeTestCase):
+    def setUp(self):
+        super().setUp()
+        self.cli("fork", "Fix the checkout timeout")
+        self.cli("fork", "Restart the web pods")
+        self.cli("done", "2")
+
+    def test_now_OnAFinishedTopic_IsRefusedAndKeepsItDone(self):
+        result = self.cli("now", "2")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--reopen", result.stderr)
+        self.assertEqual(self.state()["topics"][1]["status"], "done")
+
+    def test_now_WithReopen_OpensTheFinishedTopic(self):
+        self.cli("now", "2", "--reopen")
+
+        self.assertEqual(self.state()["topics"][1]["status"], "open")
+        self.assertEqual(self.state()["current"], 2)
+
+    def test_done_WithOpenSubtopics_IsRefusedAndNamesThem(self):
+        self.cli("fork", "Read the gateway logs", "--under", "1")
+
+        result = self.cli("done", "1")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Read the gateway logs", result.stderr)
+        self.assertEqual(self.state()["topics"][0]["status"], "open")
+
+    def test_drop_WithOpenSubtopics_DropsTheWholeBranch(self):
+        self.cli("fork", "Read the gateway logs", "--under", "1")
+
+        self.cli("drop", "1")
+
+        statuses = [topic["status"] for topic in self.state()["topics"]]
+        self.assertEqual(statuses, ["dropped", "done", "dropped"])
+
+    def test_focus_OnAFinishedTopic_IsRefused(self):
+        result = self.cli("focus", "2")
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIsNone(self.state()["focus"])
+
+
+class InteractionLogTests(TopicTreeTestCase):
+    def log(self, session="s1"):
+        with open(os.path.join(self.home, "logs", f"{session}.jsonl"), encoding="utf-8") as handle:
+            return [json.loads(line) for line in handle]
+
+    def test_every_Command_IsLoggedWithWhereItCameFrom(self):
+        self.cli("fork", "Fix the checkout timeout")
+        self.cli("--via", "panel", "done", "1")
+
+        entries = self.log()
+
+        self.assertEqual([entry["args"][0] for entry in entries], ["fork", "done"])
+        self.assertEqual([entry["via"] for entry in entries], ["claude", "panel"])
+        self.assertEqual(entries[1]["exit"], 0)
+
+    def test_aRefusedCommand_IsLoggedWithItsError(self):
+        self.cli("--via", "panel", "now", "9")
+
+        entry = self.log()[0]
+
+        self.assertEqual(entry["exit"], 1)
+        self.assertIn("no topic #9", entry["error"])
+
+    def test_report_BundlesTheLogAndTheTreeIntoOneFile(self):
+        self.cli("fork", "Fix the checkout timeout")
+
+        result = self.cli("report")
+
+        path = result.stdout.strip().splitlines()[-1]
+        bundle = open(path, encoding="utf-8").read()
+        self.assertIn("sidequest", bundle)
+        self.assertIn('"fork"', bundle)
+        self.assertIn("Fix the checkout timeout", bundle)
+
+    def test_report_WithRedact_HidesTitlesNotesAndArguments(self):
+        self.cli("fork", "Fix the checkout timeout")
+        self.cli("note", "secret customer detail")
+
+        path = self.cli("report", "--redact").stdout.strip().splitlines()[-1]
+
+        bundle = open(path, encoding="utf-8").read()
+        self.assertNotIn("Fix the checkout timeout", bundle)
+        self.assertNotIn("secret customer detail", bundle)
+        self.assertIn("topic 1", bundle)
+
+
 class RenameTests(TopicTreeTestCase):
     def test_rename_ChangesTheTitle(self):
         self.cli("fork", "CSV")
@@ -203,7 +293,7 @@ class NowTests(TopicTreeTestCase):
         self.cli("fork", "Sarah's CSV export")
         self.cli("done", "1")
 
-        self.cli("now", "1")
+        self.cli("now", "1", "--reopen")
 
         self.assertEqual(self.state()["topics"][0]["status"], "open")
 
@@ -278,7 +368,7 @@ class StateSafetyTests(TopicTreeTestCase):
         self.cli("fork", "Sarah's CSV export", session="../../escape")
 
         self.assertEqual(os.listdir(os.path.dirname(self.home)).count("escape.json"), 0)
-        self.assertEqual(len(os.listdir(self.home)), 1)
+        self.assertEqual(len([name for name in os.listdir(self.home) if name.endswith(".json")]), 1)
 
     def test_cli_WithoutASession_Fails(self):
         result = self.run_script("topics.py", "show")
@@ -646,6 +736,7 @@ class FocusTests(TopicTreeTestCase):
 
     def test_done_OnTheFocusTopic_ClearsFocusAndListsTheParkedIdeas(self):
         self.cli("park", "try a canary deploy next time")
+        self.cli("done", "2")
 
         result = self.cli("done", "1")
 

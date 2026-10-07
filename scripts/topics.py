@@ -1,5 +1,7 @@
 import argparse
 import datetime
+import io
+import json
 import os
 import re
 import sqlite3
@@ -123,11 +125,30 @@ def parked_during(state, focus_id):
             and any(ancestor["id"] == focus_id for ancestor in tree.ancestors(state, tree.find(state, topic["parked_from"]) or {"id": None, "parent": None}))]
 
 
+def open_descendants(state, topic_id):
+    children = [topic for topic in state["topics"] if topic["parent"] == topic_id]
+    found = []
+    for child in children:
+        if child["status"] == "open":
+            found.append(child)
+        found += open_descendants(state, child["id"])
+    return found
+
+
 def close(state, topic_id, status):
     topic = tree.find(state, topic_id)
     if topic is None:
         return fail(f"no topic #{topic_id}")
+    still_open = open_descendants(state, topic_id)
+    if status == "done" and still_open:
+        names = ", ".join(f"#{child['id']} {child['title']}" for child in still_open)
+        return fail(f"#{topic_id} still has open subtopics: {names}. Finish or drop them first.")
     message = progress_prompt(state, topic_id) if status == "done" else ""
+    for child in still_open:
+        child["status"] = "dropped"
+        child["closed"] = tree.now()
+        if state["current"] == child["id"]:
+            state["current"] = topic_id
     topic["status"] = status
     topic["closed"] = tree.now()
     if state["current"] == topic_id:
@@ -141,10 +162,12 @@ def close(state, topic_id, status):
     return 0
 
 
-def now(state, session, topic_id, reason):
+def now(state, session, topic_id, reason, reopen=False):
     topic = tree.find(state, topic_id)
     if topic is None:
         return fail(f"no topic #{topic_id}")
+    if topic["status"] in ("done", "dropped") and not reopen:
+        return fail(f"#{topic_id} {topic['title']} is {topic['status']}. Pass --reopen only when the user asks to reopen it.")
     if state["focus"] is not None:
         refused = guard(state, topic_id, topic["title"], reason)
         if refused:
@@ -221,6 +244,8 @@ def focus(state, topic_id, off):
     topic = tree.find(state, topic_id)
     if topic is None:
         return fail(f"no topic #{topic_id}")
+    if topic["status"] != "open":
+        return fail(f"#{topic_id} is {topic['status']}; only an open topic can be the focus")
     state["focus"] = topic_id
     print(f"focus on #{topic_id} {topic['title']}")
     return 0
@@ -457,9 +482,33 @@ def stats():
     return 0
 
 
+def report(session, redact):
+    state = tree.load(session)
+    entries = tree.read_log(session)
+    if redact:
+        names = {topic["id"]: f"topic {topic['id']}" for topic in state["topics"]}
+        for topic in state["topics"]:
+            topic.update(title=names[topic["id"]], notes=[], links=[], raw=None,
+                         progress=[{"session": entry["session"], "at": entry["at"], "text": "(redacted)"} for entry in topic["progress"]])
+        for entry in entries:
+            entry["args"] = entry["args"][:1] + ["…" for _ in entry["args"][1:]]
+            entry["error"] = "(redacted)" if entry.get("error") else ""
+    plugin = json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".claude-plugin", "plugin.json")))
+    bundle = {"plugin": plugin["name"], "version": plugin["version"], "python": sys.version.split()[0],
+              "platform": sys.platform, "session": session, "redacted": redact, "state": state, "log": entries}
+    os.makedirs(os.path.join(tree.home(), "reports"), exist_ok=True)
+    path = os.path.join(tree.home(), "reports", f"{tree.safe(session)}-{tree.now().replace(':', '')}.json")
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(bundle, handle, indent=2, ensure_ascii=False)
+    print("Bug report bundle written. Attach this file to the issue:")
+    print(path)
+    return 0
+
+
 def main(arguments):
     parser = argparse.ArgumentParser(prog="topics.py")
     parser.add_argument("--session")
+    parser.add_argument("--via", default="claude")
     commands = parser.add_subparsers(dest="command", required=True)
     fork_parser = commands.add_parser("fork")
     fork_parser.add_argument("title")
@@ -470,6 +519,7 @@ def main(arguments):
     now_parser = commands.add_parser("now")
     now_parser.add_argument("id", type=int)
     now_parser.add_argument("--reason")
+    now_parser.add_argument("--reopen", action="store_true")
     rename_parser = commands.add_parser("rename")
     rename_parser.add_argument("id", type=int)
     rename_parser.add_argument("title")
@@ -510,7 +560,10 @@ def main(arguments):
     commands.add_parser("parked")
     commands.add_parser("find").add_argument("query")
     commands.add_parser("stats")
+    commands.add_parser("report").add_argument("--redact", action="store_true")
     options = parser.parse_args(arguments)
+    if options.command == "report":
+        return report(options.session or "unknown", options.redact) if options.session else fail("--session is required")
 
     global_commands = {
         "standup": lambda: standup(options.since),
@@ -534,7 +587,7 @@ def main(arguments):
             "fork": lambda: fork(state, session, options.title, options.under, options.reason),
             "done": lambda: close(state, options.id, "done"),
             "drop": lambda: close(state, options.id, "dropped"),
-            "now": lambda: now(state, session, options.id, options.reason),
+            "now": lambda: now(state, session, options.id, options.reason, options.reopen),
             "rename": lambda: rename(state, options.id, options.title),
             "note": lambda: note(state, session, options.text, options.on),
             "progress": lambda: progress(state, session, options.text, options.on),
@@ -554,5 +607,32 @@ def main(arguments):
     return code
 
 
+def logged(arguments):
+    errors = io.StringIO()
+    real_stderr = sys.stderr
+    sys.stderr = Tee(real_stderr, errors)
+    try:
+        code = main(arguments)
+    except SystemExit as exit:
+        code = exit.code if isinstance(exit.code, int) else 1
+    finally:
+        sys.stderr = real_stderr
+    tree.write_log(arguments, code, errors.getvalue().strip())
+    return code
+
+
+class Tee:
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, text):
+        for stream in self.streams:
+            stream.write(text)
+
+    def flush(self):
+        for stream in self.streams:
+            stream.flush()
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(logged(sys.argv[1:]))

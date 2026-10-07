@@ -15,9 +15,48 @@ def now():
     return os.environ.get("SIDEQUEST_NOW") or datetime.datetime.now().isoformat(timespec="seconds")
 
 
+def safe(session):
+    return re.sub(r"[^\w-]", "_", session or "unknown")
+
+
 def path(session):
-    safe = re.sub(r"[^\w-]", "_", session or "unknown")
-    return os.path.join(home(), f"{safe}.json")
+    return os.path.join(home(), f"{safe(session)}.json")
+
+
+LOGGED = {"--session", "--via"}
+
+
+def write_log(arguments, code, error):
+    session, via, args, skip = None, "claude", [], False
+    for index, value in enumerate(arguments):
+        if skip:
+            skip = False
+            continue
+        if value in LOGGED and index + 1 < len(arguments):
+            if value == "--session":
+                session = arguments[index + 1]
+            else:
+                via = arguments[index + 1]
+            skip = True
+            continue
+        args.append(value)
+    if not args or args[0] == "report":
+        return
+    folder = os.path.join(home(), "logs")
+    try:
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, f"{safe(session or 'global')}.jsonl"), "a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"at": now(), "via": via, "args": args, "exit": code, "error": error}, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
+def read_log(session):
+    try:
+        with open(os.path.join(home(), "logs", f"{safe(session)}.jsonl"), encoding="utf-8") as handle:
+            return [json.loads(line) for line in handle if line.strip()]
+    except (OSError, ValueError):
+        return []
 
 
 DEFAULTS = {"notes": [], "links": [], "progress": [], "sessions": [], "messages": 0, "priority": None,
