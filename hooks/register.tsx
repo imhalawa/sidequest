@@ -24,14 +24,27 @@ const isCaptureOpen = atom({ plugin: 'sidequest', key: 'isCaptureOpen' } as cons
 const idea = atom({ plugin: 'sidequest', key: 'idea' } as const, '')
 const IDEA_LIMIT = 255
 
+const COLORS = {
+  brand: 'claude',
+  current: 'suggestion',
+  open: 'warning',
+  done: 'success',
+  dropped: 'inactive',
+  parked: 'remember',
+  running: 'planMode',
+  alert: 'error',
+  line: 'subtle',
+  muted: 'inactive',
+} as const
+
 const LOOKS = {
-  current: { glyph: '▶', color: 'cyan' },
-  open: { glyph: '☐', color: 'yellow' },
-  done: { glyph: '✓', color: 'green' },
-  dropped: { glyph: '✗', color: 'gray' },
-  parked: { glyph: '◇', color: 'magenta' },
-  running: { glyph: '⇢', color: 'blue' },
-  waiting: { glyph: '!', color: 'red' },
+  current: { glyph: '▶', color: COLORS.current },
+  open: { glyph: '☐', color: COLORS.open },
+  done: { glyph: '✓', color: COLORS.done },
+  dropped: { glyph: '✗', color: COLORS.dropped },
+  parked: { glyph: '◇', color: COLORS.parked },
+  running: { glyph: '⇢', color: COLORS.running },
+  waiting: { glyph: '!', color: COLORS.alert },
 } as const
 
 const find = (state: State, id: number | null | undefined) => state.topics.find(topic => topic.id === id)
@@ -185,8 +198,8 @@ export const register: Register = (on, options) => {
     if (state.topics.length === 0) {
       const { Box: EmptyBox, Text: EmptyText } = $.ui.resolve(e)
       return (
-        <EmptyBox key="empty" borderStyle="round" borderColor="cyan" paddingX={1}>
-          <EmptyText dimColor>sidequest · no topics yet · start with + to park an idea</EmptyText>
+        <EmptyBox key="empty" borderStyle="round" borderColor={COLORS.brand} paddingX={1}>
+          <EmptyText><EmptyText bold color={COLORS.brand}>sidequest</EmptyText><EmptyText color={COLORS.muted}> · no topics yet · start a message with + to park an idea</EmptyText></EmptyText>
         </EmptyBox>
       )
     }
@@ -275,31 +288,38 @@ export const register: Register = (on, options) => {
     const header = (
       <Box flexDirection="row" gap={1}>
         <Button key="collapse" hotkey="c" label={collapsed ? '+' : '−'} onPress={() => update($, isCollapsed, value => !value)} />
-        <Text bold color="black" backgroundColor={focus ? 'red' : 'cyan'}> sidequest </Text>
-        <Text><Text color="yellow">☐</Text><Text dimColor> {count('open')}</Text></Text>
-        <Text><Text color="green">✓</Text><Text dimColor> {count('done')}</Text></Text>
-        {ideas.length > 0 ? <Text><Text color="magenta">◇</Text><Text dimColor> {ideas.length}</Text></Text> : null}
+        <Text bold color="inverseText" backgroundColor={focus ? COLORS.alert : COLORS.brand}> sidequest </Text>
+        <Text><Text bold color={COLORS.open}>☐ {count('open')}</Text></Text>
+        <Text><Text bold color={COLORS.done}>✓ {count('done')}</Text></Text>
+        {ideas.length > 0 ? <Text><Text bold color={COLORS.parked}>◇ {ideas.length}</Text></Text> : null}
         {current ? (
           <Text>
-            <Text dimColor>│ </Text>
-            <Text color="cyan">{fit(crumb, crumbRoom)}</Text>
-            <Text color={levels >= depthAlert ? 'red' : 'gray'} bold={levels >= depthAlert}> · depth {levels}</Text>
+            <Text color={COLORS.line}>│ </Text>
+            {path_.map((topic, index) => (
+              <Text key={`crumb-${topic.id}`}>
+                {index > 0 ? <Text color={COLORS.line}> › </Text> : null}
+                <Text color={index === path_.length - 1 ? COLORS.current : COLORS.muted} bold={index === path_.length - 1}>
+                  {fit(topic.title, Math.max(6, Math.floor(crumbRoom / path_.length) - 3))}
+                </Text>
+              </Text>
+            ))}
+            <Text color={levels >= depthAlert ? COLORS.alert : COLORS.muted} bold={levels >= depthAlert}> · depth {levels}</Text>
           </Text>
         ) : null}
       </Box>
     )
     const focusLine = focus ? (
       <Box flexDirection="row" gap={1}>
-        <Text bold color="white" backgroundColor="red"> ◉ FOCUS </Text>
-        <Text bold color="red">{fit(focus.title, Math.max(8, columns - 26))}</Text>
+        <Text bold color="inverseText" backgroundColor={COLORS.alert}> ◉ FOCUS </Text>
+        <Text bold color={COLORS.alert}>{fit(focus.title, Math.max(8, columns - 26))}</Text>
         <Button key="unfocus" plain dimColor label="end focus" onPress={() => endFocus()} />
       </Box>
     ) : null
     const frame = (children: RenderChildren) => (
-      <Box flexDirection="column" borderStyle="round" borderColor={focus ? 'red' : 'cyan'} paddingX={1}>{children}</Box>
+      <Box flexDirection="column" borderStyle="round" borderColor={focus ? COLORS.alert : COLORS.brand} paddingX={1}>{children}</Box>
     )
     if (collapsed || isTiny) {
-      return frame(isTiny ? <Text color="cyan">▶ {fit(current ? current.title : 'sidequest', Math.max(4, columns - counts.length - 8))} · {counts}</Text> : [header, focusLine])
+      return frame(isTiny ? <Text><Text bold color={COLORS.current}>▶ {fit(current ? current.title : 'sidequest', Math.max(4, columns - counts.length - 8))}</Text><Text color={COLORS.muted}> · {counts}</Text></Text> : [header, focusLine])
     }
 
     const isFolded = (topic: Topic) => {
@@ -332,7 +352,7 @@ export const register: Register = (on, options) => {
     const row = (key: string, prefix: string, isLast: boolean, lead: RenderChildren, body: RenderChildren) =>
       rows.push(
         <Box key={key} flexDirection="row">
-          <Text color="gray" dimColor>{prefix + (isLast ? '└─' : '├─')}</Text>
+          <Text color={COLORS.line}>{prefix + (isLast ? '└─' : '├─')}</Text>
           {lead}
           {body}
         </Box>,
@@ -354,17 +374,17 @@ export const register: Register = (on, options) => {
         row(`topic-${topic.id}`, prefix, isLast,
           hidden.length > 0
             ? <Button key={`fold-${topic.id}`} dimColor label={folded ? '+' : '−'} onPress={() => flip(topic.id)} />
-            : <Text color="gray" dimColor>─────</Text>,
+            : <Text color={COLORS.line}>─────</Text>,
           <Box flexDirection="row">
-            <Text bold={topic.id === state.current} color={topic.id === state.focus ? 'red' : style.color}> {style.glyph} </Text>
+            <Text bold color={topic.id === state.focus ? COLORS.alert : style.color}> {style.glyph} </Text>
             {!isClickable(topic)
               ? <Box key={`switch-${topic.id}`}>
-                  <Text bold={topic.id === state.current} color={topic.id === state.current ? 'cyan' : undefined}
-                    dimColor={topic.id !== state.current} strikethrough={topic.status === 'dropped'}>{fit(topic.title, Math.max(8, room))}</Text>
+                  <Text bold={topic.id === state.current} color={topic.id === state.current ? COLORS.current : COLORS.muted}
+                    strikethrough={topic.status === 'dropped'}>{fit(topic.title, Math.max(8, room))}</Text>
                 </Box>
-              : <Button key={`switch-${topic.id}`} plain dimColor={topic.status !== 'open' || isStale(topic)}
-                  hover={{ color: 'cyan' }} label={fit(topic.title, Math.max(8, room))} onPress={() => switchTo(topic.id)} />}
-            {folded ? <Text dimColor> (+{hidden.length}{hiddenOpen > 0 ? `, ${hiddenOpen} open` : ''})</Text> : null}
+              : <Button key={`switch-${topic.id}`} plain dimColor={isStale(topic)}
+                  hover={{ color: COLORS.current }} label={fit(topic.title, Math.max(8, room))} onPress={() => switchTo(topic.id)} />}
+            {folded ? <Text><Text color={COLORS.muted}>  +{hidden.length}</Text>{hiddenOpen > 0 ? <Text color={COLORS.open}> · {hiddenOpen} open</Text> : null}</Text> : null}
             {canDelegate ? <Button key={`delegate-${topic.id}`} label={topic.title.length > room ? '⇢' : '⇢ delegate'} onPress={() => delegate(topic)} /> : null}
           </Box>)
         if (!folded) {
@@ -374,7 +394,7 @@ export const register: Register = (on, options) => {
       if (closedLeaves.length >= 2) {
         row(`closed-${groupKey}`, prefix, true,
           <Button key={`fold-closed-${groupKey}`} dimColor label={showClosed ? '−' : '+'} onPress={() => flip(groupKey)} />,
-          <Text dimColor color="green"> ✓ {closedLeaves.length} finished</Text>)
+          <Text color={COLORS.done}> ✓ {closedLeaves.length} finished</Text>)
       }
     }
     walk(null, '')
@@ -383,14 +403,14 @@ export const register: Register = (on, options) => {
       <Box flexDirection="column">
         <Box flexDirection="row" gap={1}>
           <Button key="parked" hotkey="p" label={parkedOpen ? '−' : '+'} onPress={() => update($, isParkedOpen, value => !value)} />
-          <Text color="magenta" bold>◇ parked ideas</Text>
-          <Text dimColor>{ideas.length}</Text>
+          <Text color={COLORS.parked} bold>◇ parked ideas</Text>
+          <Text color={COLORS.muted}>{ideas.length}</Text>
         </Box>
         {parkedOpen ? ideas.map(idea => (
           <Box key={`idea-${idea.id}`} flexDirection="row">
-            <Text dimColor>      ◇ </Text>
+            <Text color={COLORS.parked}>      ◇ </Text>
             {isClickable(idea)
-              ? <Button key={`open-${idea.id}`} plain hover={{ color: 'magenta' }} label={fit(idea.title, Math.max(8, columns - 12))} onPress={() => switchTo(idea.id)} />
+              ? <Button key={`open-${idea.id}`} plain hover={{ color: COLORS.parked }} label={fit(idea.title, Math.max(8, columns - 12))} onPress={() => switchTo(idea.id)} />
               : <Box key={`open-${idea.id}`}><Text dimColor>{fit(idea.title, Math.max(8, columns - 12))}</Text></Box>}
           </Box>
         )) : null}
@@ -413,11 +433,11 @@ export const register: Register = (on, options) => {
 <Box key="capture-row" flexDirection="column">
         <Button key="capture" hotkey="i" label={captureOpen ? '◇ close capture' : '◇ capture'} onPress={() => update($, isCaptureOpen, value => !value)} />
         {captureOpen && Input ? (
-          <Box borderStyle="round" borderColor="magenta" paddingX={1} minHeight={3} flexDirection="column">
+          <Box borderStyle="round" borderColor={COLORS.parked} paddingX={1} minHeight={3} flexDirection="column">
             <Input key="idea" autoFocus value={draftIdea} placeholder="a new idea, Enter to park it"
               onInput={(value: string) => { void update($, idea, () => value.slice(0, IDEA_LIMIT)) }}
               onSubmit={(value: string) => { void park(value) }} />
-            <Text dimColor color={draftIdea.length >= IDEA_LIMIT ? 'red' : undefined}>{draftIdea.length}/{IDEA_LIMIT}</Text>
+            <Text color={draftIdea.length >= IDEA_LIMIT ? COLORS.alert : COLORS.muted}>{draftIdea.length}/{IDEA_LIMIT}</Text>
           </Box>
         ) : null}
       </Box>,
