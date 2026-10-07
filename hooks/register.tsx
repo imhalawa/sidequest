@@ -23,6 +23,9 @@ const pendingNote = atom({ plugin: 'sidequest', key: 'pendingNote' } as const, '
 const isCaptureOpen = atom({ plugin: 'sidequest', key: 'isCaptureOpen' } as const, false)
 const idea = atom({ plugin: 'sidequest', key: 'idea' } as const, '')
 const isFinishedHidden = atom({ plugin: 'sidequest', key: 'isFinishedHidden' } as const, false)
+const confirmUnpark = atom({ plugin: 'sidequest', key: 'confirmUnpark' } as const, 0 as TopicId)
+const isKeysShown = atom({ plugin: 'sidequest', key: 'isKeysShown' } as const, false)
+const KEYS = 'ctrl+x tab to reach the panel, then: c collapse · u up · d done · x drop · k park · f focus · p parked ideas · i capture · h hide finished · s shortcuts'
 const IDEA_LIMIT = 255
 
 const COLORS = {
@@ -89,7 +92,7 @@ export const register: Register = (on, options) => {
       description:
         'Records and reads the sidequest topic tree for this session. Pass the command and its arguments as args, ' +
         'e.g. ["fork", "Fix the login timeout"] (under the current topic), ["done", "3"], ["park", "cache price lookups"], ["show", "--ids"]. ' +
-        'Commands: fork, done, drop, now, rename, note, progress, link, park, focus, priority, elect, brief, delegation, carry, back, show, find, parked, standup, stats, report.',
+        'Commands: fork, done, drop, now, rename, note, progress, link, park, shelve, unpark, focus, priority, elect, brief, delegation, carry, back, show, find, parked, standup, stats, report.',
       inputSchema: {
         type: 'object',
         properties: { args: { type: 'array', items: { type: 'string' }, description: 'The command, then its arguments' } },
@@ -295,6 +298,8 @@ export const register: Register = (on, options) => {
     const captureOpen = await read($, isCaptureOpen)
     const draftIdea = await read($, idea)
     const hideFinished = await read($, isFinishedHidden)
+    const asking = await read($, confirmUnpark)
+    const keysShown = await read($, isKeysShown)
     const collapsed = await read($, isCollapsed)
     const parkedOpen = await read($, isParkedOpen)
     const flipped = await read($, toggled)
@@ -437,14 +442,31 @@ export const register: Register = (on, options) => {
           <Text color={COLORS.parked} bold>◇ parked ideas</Text>
           <Text color={COLORS.muted}>{ideas.length}</Text>
         </Box>
-        {parkedOpen ? ideas.map(idea => (
-          <Box key={`idea-${idea.id}`} flexDirection="row">
-            <Text color={COLORS.parked}>      ◇ </Text>
-            {isClickable(idea)
-              ? <Button key={`open-${idea.id}`} plain hover={{ color: COLORS.parked }} label={fit(idea.title, Math.max(8, columns - 12))} onPress={() => switchTo(idea.id)} />
-              : <Box key={`open-${idea.id}`}><Text dimColor>{fit(idea.title, Math.max(8, columns - 12))}</Text></Box>}
-          </Box>
-        )) : null}
+        {parkedOpen ? ideas.map(idea => {
+          const branch = descendants(state, idea.id).length
+          return (
+            <Box key={`idea-${idea.id}`} flexDirection="column">
+              <Box flexDirection="row">
+                <Text color={COLORS.parked}>      ◇ </Text>
+                {isClickable(idea)
+                  ? <Button key={`open-${idea.id}`} plain hover={{ color: COLORS.parked }} label={fit(idea.title, Math.max(8, columns - 16))}
+                      onPress={() => update($, confirmUnpark, () => idea.id)} />
+                  : <Box key={`open-${idea.id}`}><Text dimColor>{fit(idea.title, Math.max(8, columns - 16))}</Text></Box>}
+                {branch ? <Text color={COLORS.muted}>  +{branch}</Text> : null}
+              </Box>
+              {asking === idea.id ? (
+                <Box flexDirection="row" gap={1} paddingLeft={8}>
+                  <Text color={COLORS.parked}>Bring it back into the tree?</Text>
+                  <Button key={`unpark-yes-${idea.id}`} variant="primary" label="yes" onPress={async () => {
+                    await update($, confirmUnpark, () => 0 as TopicId)
+                    await run('unpark', String(idea.id))
+                  }} />
+                  <Button key={`unpark-no-${idea.id}`} dimColor label="no" onPress={() => update($, confirmUnpark, () => 0 as TopicId)} />
+                </Box>
+              ) : null}
+            </Box>
+          )
+        }) : null}
       </Box>
     ) : null
 
@@ -459,14 +481,17 @@ export const register: Register = (on, options) => {
         {openUp && inFocus(openUp) ? <Button key="up" hotkey="u" dimColor label={compact ? '↑' : '↑ up'} onPress={() => switchTo(openUp.id)} /> : null}
         {current && !hasOpenChildren ? <Button key="done" hotkey="d" variant="primary" label={compact ? '✓' : '✓ done'} onPress={() => finish(current)} /> : null}
         {current ? <Button key="drop" hotkey="x" dimColor label={compact ? '✗' : '✗ drop'} onPress={() => run('drop', String(current.id))} /> : null}
+        {current && current.id !== state.focus ? <Button key="park-topic" hotkey="k" dimColor label={compact ? '◇' : '◇ park'} onPress={() => run('shelve', String(current.id))} /> : null}
         {current && !focus ? <Button key="focus" hotkey="f" label={compact ? '◉' : '◉ focus'} onPress={() => startFocus(current)} /> : null}
       </Box>,
 <Box key="capture-row" flexDirection="column" width="100%">
         <Box flexDirection="row" gap={1}>
           <Button key="capture" hotkey="i" label={captureOpen ? '◇ close capture' : '◇ capture'} onPress={() => update($, isCaptureOpen, value => !value)} />
+          <Button key="keys" hotkey="s" plain dimColor label={keysShown ? '⌨ hide shortcuts' : '⌨ shortcuts'} onPress={() => update($, isKeysShown, value => !value)} />
           <Button key="hide-finished" hotkey="h" dimColor label={hideFinished ? `✓ show finished (${count('done') + count('dropped')})` : '✓ hide finished'}
             onPress={() => update($, isFinishedHidden, value => !value)} />
         </Box>
+        {keysShown ? <Box key="keys-help"><Text color={COLORS.muted}>{KEYS}</Text></Box> : null}
         {captureOpen && Input ? (
           <Box borderStyle="round" borderColor={COLORS.parked} paddingX={1} minHeight={3} width="100%" flexDirection="column">
             <Box flexGrow={1} width="100%">

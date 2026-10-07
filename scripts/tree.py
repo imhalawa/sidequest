@@ -211,7 +211,14 @@ def usage(session):
         f"{command} drop <id>                            topic abandoned, not needed any more\n"
         f"{command} now <id>                             back to an earlier topic; prints its notes and links\n"
         f'{command} rename <id> "<title>"                a clearer title once the topic is better understood\n'
+        f"{command} move <id> --under <id>|root          re-file a topic under the right parent\n"
         f'{command} note "<text>" [--on <id>]            a finding, decision, or next step worth keeping\n'
         f"{command} link <kind> <value> [--on <id>]      a Jira key, PR, Slack thread, or file the topic is about\n"
+        f'{command} progress "<text>" [--on <id>]        what was done, decided, ruled out, and the next step\n'
+        f'{command} park "<idea>"                        save a new idea without leaving the current topic\n'
+        f"{command} shelve <id> | unpark <id>             park an existing topic with its branch; bring it back\n"
+        f"{command} focus <id> | --off                   pin an urgent topic; leaving it needs --reason\n"
+        f"{command} priority <id> now|today|later        how urgent a topic is\n"
+        f"{command} elect <id> [--off]                   mark a topic a sub-agent could handle alone\n"
         f"{command} show [--ids]                         print the tree"
     )

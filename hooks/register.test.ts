@@ -362,3 +362,68 @@ test('on the terminal the band above the prompt keeps the full tree', async ($, 
   expect(await ui.find({ key: 'switch-1' })).toBeDefined()
   expect(await ui.find({ key: 'open-pane' })).toBeUndefined()
 })
+
+const PARKABLE = {
+  current: 2,
+  focus: null,
+  topics: [
+    { id: 1, title: 'Fix the checkout timeout', parent: null, status: 'open', sessions: ['test-session'] },
+    { id: 2, title: 'Read the gateway logs', parent: 1, status: 'open', sessions: ['test-session'] },
+    { id: 5, title: 'Cache price lookups', parent: null, status: 'parked' },
+  ],
+}
+
+test('park sends the current topic to the parked ideas', async ($, on) => {
+  const calls: string[][] = []
+  stubs(on, PARKABLE)
+  on('process.run', ($, e) => {
+    calls.push([...e.argv])
+    return { value: { exitCode: 0, stdout: '', stderr: '' } }
+  })
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  await ui.press({ key: 'park-topic' })
+
+  expect(calls.at(-1)?.slice(-2)).toEqual(['shelve', '2'])
+})
+
+test('clicking a parked idea asks before bringing it back', async ($, on) => {
+  const calls: string[][] = []
+  stubs(on, PARKABLE)
+  on('process.run', ($, e) => {
+    calls.push([...e.argv])
+    return { value: { exitCode: 0, stdout: '', stderr: '' } }
+  })
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+  await ui.press({ key: 'parked' })
+
+  await ui.press({ key: 'open-5' })
+
+  expect(calls).toEqual([])
+  expect(await ui.find({ key: 'unpark-yes-5' })).toBeDefined()
+
+  await ui.press({ key: 'unpark-no-5' })
+
+  expect(calls).toEqual([])
+  expect(await ui.find({ key: 'unpark-yes-5' })).toBeUndefined()
+
+  await ui.press({ key: 'open-5' })
+  await ui.press({ key: 'unpark-yes-5' })
+
+  expect(calls.at(-1)?.slice(-2)).toEqual(['unpark', '5'])
+})
+
+test('the shortcuts button shows the keyboard shortcuts and hides them again', async ($, on) => {
+  stubs(on, FOCUSABLE)
+  const ui = await $.ui.mount({ plugin: 'sidequest', surface: 'terminal', component: 'AbovePrompt', props: { hasSurvey: false } as never, viewport: WIDE } as never)
+
+  expect(await ui.find({ key: 'keys-help' })).toBeUndefined()
+
+  await ui.press({ key: 'keys' })
+
+  expect(await ui.find({ key: 'keys-help' })).toBeDefined()
+
+  await ui.press({ key: 'keys' })
+
+  expect(await ui.find({ key: 'keys-help' })).toBeUndefined()
+})

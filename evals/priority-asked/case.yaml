@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "name": "priority-asked",
-  "description": "A topic that first comes up gets one short priority question: now, today, or later.",
+  "description": "A topic that first comes up gets one priority question, through the question tool or as a one-line question.",
   "tags": [
     "sidequest"
   ],
@@ -9,7 +9,8 @@
     "prompt": "I need to fix the flaky checkout integration tests",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {}
   },
@@ -26,7 +27,7 @@
       "type": "regex",
       "name": "asks-priority",
       "target": "last_message",
-      "pattern": "now.*today.*later|today.*later",
+      "pattern": "now.*today.*later",
       "match": "contains",
       "flags": "is"
     }

@@ -9,7 +9,8 @@
     "prompt": "switch to the offsite planning, the venue deadline is in an hour",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/focus-leave-with-reason/fixtures/seed.json"

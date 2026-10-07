@@ -9,7 +9,8 @@
     "prompt": "new question: what is the difference between a list and a tuple in python?",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/silent-recording/fixtures/seed.json"

@@ -9,7 +9,8 @@
     "prompt": "the outage is fixed, mark it done",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/parked-at-break/fixtures/seed.json"

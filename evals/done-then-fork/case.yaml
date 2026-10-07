@@ -9,7 +9,8 @@
     "prompt": "great, that answers it. next: how do I read a CSV file in python?",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/done-then-fork/fixtures/seed.json"

@@ -35,7 +35,7 @@ Requires `python3` on the `PATH`.
 
 | Feature | What it does |
 |---|---|
-| Topic tree | Every subject and side question becomes a topic, nested where it forked off |
+| Topic tree | Every subject and side question becomes a topic, nested where it forked off; work on the same PR, ticket, or goal goes under that topic |
 | Clear titles | Each title names the action and what it acts on, so it reads on its own a day later |
 | Notes and links | Findings, decisions, Jira keys, PRs, Slack threads, and files stay on their topic; a new topic links its git branch by itself |
 | Progress | Leaving a topic saves where it stood: done, decided, ruled out, next step |
@@ -55,6 +55,8 @@ Requires `python3` on the `PATH`.
 |---|---|
 | Parking | New ideas during focus, and side thoughts inside a task message, are parked as `◇` instead of derailing you |
 | `◇ capture` | One press opens a 3-line box, up to 255 characters; Enter parks the idea without reaching Claude |
+| `◇ park` | Parks the topic you are on with its whole branch, so the tree stays about what you are doing now |
+| Bringing one back | Clicking a parked idea asks first, then restores it under its old parent when that is still open |
 | `+ ` prefix | A message that starts with `+ ` is parked instead of sent |
 | Lost-thought recovery | A draft of more than one word that you clear without sending is parked |
 
@@ -65,7 +67,7 @@ Requires `python3` on the `PATH`.
 | Carry-over | A new session in the same folder offers the last session's open topics |
 | Past topics | Bring up something you worked on before, and Claude offers: start fresh, continue with the saved progress, or resume the old conversation |
 | Reminders | At natural breaks, Claude lists parked ideas, most valuable first: your priority, then how often the idea came back, then how close it is to your current work |
-| Priority | A new topic gets one quick question: now, today, or later |
+| Priority | A new topic gets one quick question, now, today, or later, as a picker when the question tool is available |
 
 ### Review
 
@@ -113,10 +115,12 @@ Keys work once the panel has the focus (ctrl+x tab).
 | `↑ up` | `u` | Go to the nearest open parent |
 | `✓ done` | `d` | Finish the current topic |
 | `✗ drop` | `x` | Drop the current topic and its open subtopics |
+| `◇ park` | `k` | Park the current topic with its branch |
 | `◉ focus` | `f` | Focus on the current topic |
-| `◇ parked ideas` | `p` | Show or hide parked ideas |
+| `◇ parked ideas` | `p` | Show or hide parked ideas; clicking one asks before bringing it back |
 | `◇ capture` | `i` | Open the capture box |
 | `✓ hide finished` | `h` | Hide or show finished topics |
+| `⌨ shortcuts` | `s` | Show every shortcut in one line |
 | `⇢ delegate` | | Start a sub-agent on an elected topic |
 
 ### What it keeps you from doing by accident
@@ -155,9 +159,9 @@ Claude records through the plugin's own `topics` tool, so Bash sandboxing never 
 | Command | Does |
 |---|---|
 | `fork "<title>" [--under <id>\|root]` | New topic |
-| `done <id>` · `drop <id>` · `now <id> [--reopen]` · `rename <id> "<title>"` | Change a topic |
+| `done <id>` · `drop <id>` · `now <id> [--reopen]` · `rename <id> "<title>"` · `move <id> --under <id>\|root` | Change a topic |
 | `note` · `progress` · `link <kind> <value>` | Add to a topic; `--on <id>` for another one |
-| `park "<idea>"` · `focus <id> \| --off` · `priority <id> now\|today\|later` | Focus and parking |
+| `park "<idea>"` · `shelve <id>` · `unpark <id>` · `focus <id> \| --off` · `priority <id> now\|today\|later` | Focus and parking |
 | `elect <id>` · `brief <id>` · `delegation <id> <status>` | Delegation |
 | `carry <session>` · `back <session> <id> --mode fresh\|progress\|resume` | Past sessions |
 | `show [--ids]` · `report [--redact]` | The tree, a bug report |

@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.1",
+  "name": "same-pr-from-elsewhere",
+  "description": "New work on the same PR as an open topic files under that topic, even when the current topic is something else.",
+  "tags": [
+    "sidequest"
+  ],
+  "execution": {
+    "prompt": "different thing: draft replies to the Copilot comments on PR #210",
+    "max_turns": 10,
+    "allowed_tools": [
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
+    ],
+    "env": {
+      "EVAL_SIDEQUEST_SEED": "evals/same-pr-from-elsewhere/fixtures/seed.json"
+    }
+  },
+  "runs": 3,
+  "graders": [
+    {
+      "type": "tool_used",
+      "name": "files-under-pr",
+      "tool": "mcp__sidequest__topics",
+      "input_match": "\"--under\"\\s*,\\s*\"1\"",
+      "min": 1
+    }
+  ]
+}

@@ -9,7 +9,8 @@
     "prompt": "one more question about Sarah's CSV export: does a 17.9 KB CSV fit in one Slack message?",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/fork-under-earlier-branch/fixtures/seed.json"

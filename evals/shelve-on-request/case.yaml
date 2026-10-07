@@ -1,43 +1,43 @@
 {
   "schema_version": "1.1",
-  "name": "focus-parks-idea",
-  "description": "With focus on, an unrelated idea is parked, not forked, and the reply steers back to the outage.",
+  "name": "shelve-on-request",
+  "description": "Parking the current topic shelves it with its branch instead of dropping or finishing it.",
   "tags": [
     "sidequest"
   ],
   "execution": {
-    "prompt": "oh random thought: we should cache price lookups someday",
+    "prompt": "park this topic for now, I want to come back to it later",
     "max_turns": 10,
     "allowed_tools": [
       "mcp__sidequest__topics",
       "AskUserQuestion"
     ],
     "env": {
-      "EVAL_SIDEQUEST_SEED": "evals/focus-parks-idea/fixtures/seed.json"
+      "EVAL_SIDEQUEST_SEED": "evals/shelve-on-request/fixtures/seed.json"
     }
   },
   "runs": 3,
   "graders": [
     {
       "type": "tool_used",
-      "name": "parks",
+      "name": "shelves",
       "tool": "mcp__sidequest__topics",
-      "input_match": "\"park\"",
+      "input_match": "\"shelve\"\\s*,\\s*\"1\"",
       "min": 1
     },
     {
       "type": "tool_used",
-      "name": "no-fork",
+      "name": "not-dropped",
       "tool": "mcp__sidequest__topics",
-      "input_match": "\"fork\"",
+      "input_match": "\"drop\"",
       "min": 0,
       "max": 0
     },
     {
       "type": "tool_used",
-      "name": "no-switch",
+      "name": "not-done",
       "tool": "mcp__sidequest__topics",
-      "input_match": "\"now\"",
+      "input_match": "\"done\"",
       "min": 0,
       "max": 0
     }

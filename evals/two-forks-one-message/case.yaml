@@ -9,7 +9,8 @@
     "prompt": "two new questions: what is a Kafka partition, and what is a DynamoDB GSI?",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/two-forks-one-message/fixtures/seed.json"

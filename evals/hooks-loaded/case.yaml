@@ -9,7 +9,8 @@
     "prompt": "help me pick a name for a function that parses dates from log lines",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {}
   },

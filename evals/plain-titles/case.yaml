@@ -9,7 +9,8 @@
     "prompt": "I keep getting a 401 from our orders API when I call it from Postman, can you help me debug it?",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {}
   },

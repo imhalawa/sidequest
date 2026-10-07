@@ -3,6 +3,6 @@ export type TopicId = number
 
 declare module 'claude-code' {
   interface PluginState {
-    sidequest: { isCollapsed: boolean; isParkedOpen: boolean; version: Version; toggled: TopicId[]; pendingNote: string; isCaptureOpen: boolean; idea: string; isFinishedHidden: boolean }
+    sidequest: { isCollapsed: boolean; isParkedOpen: boolean; version: Version; toggled: TopicId[]; pendingNote: string; isCaptureOpen: boolean; idea: string; isFinishedHidden: boolean; confirmUnpark: TopicId; isKeysShown: boolean }
   }
 }

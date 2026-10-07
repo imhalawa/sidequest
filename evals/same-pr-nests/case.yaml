@@ -1,36 +1,35 @@
 {
   "schema_version": "1.1",
-  "name": "fork-tangent",
-  "description": "The side question is forked once, under the current topic, not at the root.",
+  "name": "same-pr-nests",
+  "description": "New work on the same PR as the current topic is a child of it, not a new top-level topic.",
   "tags": [
     "sidequest"
   ],
   "execution": {
-    "prompt": "quick side question: how do I list my DynamoDB tables with the aws cli?",
+    "prompt": "while we're at it, fix the dotnet format drift Copilot flagged on PR #210",
     "max_turns": 10,
     "allowed_tools": [
       "mcp__sidequest__topics",
       "AskUserQuestion"
     ],
     "env": {
-      "EVAL_SIDEQUEST_SEED": "evals/fork-tangent/fixtures/seed.json"
+      "EVAL_SIDEQUEST_SEED": "evals/same-pr-nests/fixtures/seed.json"
     }
   },
   "runs": 3,
   "graders": [
     {
       "type": "tool_used",
-      "name": "forks-once",
+      "name": "forks",
       "tool": "mcp__sidequest__topics",
       "input_match": "\"fork\"",
-      "min": 1,
-      "max": 1
+      "min": 1
     },
     {
       "type": "tool_used",
       "name": "not-at-root",
       "tool": "mcp__sidequest__topics",
-      "input_match": "\"--under\"\\s*,\\s*\"root\"",
+      "input_match": "\"--under\"\\s*,\\s*\"root\"(?![\\s\\S]*move)",
       "min": 0,
       "max": 0
     }

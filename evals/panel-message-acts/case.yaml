@@ -9,7 +9,8 @@
     "prompt": "[sidequest] Focus is now on #3 \"Fix the production outage\". Save a progress entry on #2 \"Book the venue\" (done, decided, next step) so it can be resumed later. Then start on the focus topic: read its notes and links, say in one line what you will do first, and do it.",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/panel-message-acts/fixtures/seed.json"

@@ -9,7 +9,8 @@
     "prompt": "Kun je me helpen? Mijn bestellingenbestand geeft een fout bij het inlezen.",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {}
   },

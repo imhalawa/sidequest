@@ -8,7 +8,7 @@ import tree
 
 INSTRUCTIONS = """sidequest: this session keeps a tree of the topics the user moves through, so they can see where they forked off and what is still open.
 Record every change with the CLI below, before you answer:
-- The user starts a new subject or a side question: fork it. It goes under the current topic; use --under root for an unrelated subject, or --under <id> for a branch of an earlier topic.
+- The user starts a new subject or a side question: fork it. By default it goes under the current topic. Work on the same PR, ticket, branch, repo task, or goal as an open topic is a child of that topic: use --under <its id>. Use --under root only when the subject has nothing to do with any open topic. When fork prints a related open topic, decide, and run move if it belongs there.
 - A topic is finished, its question answered or its task done: mark it done.
 - The user goes back to an earlier topic: switch to it with now, then use the notes and links it prints. Never fork a topic that already exists. A finished topic stays finished; add --reopen only when the user asks to reopen it.
 - A topic with open subtopics cannot be marked done: finish or drop the subtopics first. Dropping a topic drops its open subtopics too.
@@ -21,7 +21,9 @@ Record every change with the CLI below, before you answer:
 - Something urgent: pin it with focus. While focus is on, a new idea outside the focus topic is parked, not forked: run park with the user's words, answer in one line ("parked: ..."), and go back to the focus topic. Leaving the focus topic needs the user's reason: ask why it is more urgent, then pass it as --reason. Never invent a reason.
 - Leaving a topic, finishing one, or ending the session: save progress on it: what was done, decided, ruled out, and the next step, one short line each.
 - A parked idea with unclear words: at the next natural break, rename it into a clear title; the original words are kept. Ask at most one question, only if it stays unclear.
-- A topic first comes up in this session: end your reply with the one line "Priority: now, today, or later?" and record the answer with priority.
+- Every time you fork a topic the user brought up, ask its priority in the same turn, every time: call the AskUserQuestion tool with the choices now, today, and later; if that tool is not available, end your reply with the one line "Priority: now, today, or later?". Record the answer with priority.
+- Ask every other question that has choices (the three ways back, why leaving focus is more urgent) with the AskUserQuestion tool too, one question per call; without the tool, ask it in one line at the end of your reply.
+- The user parks a topic they are on ("park this", "put this aside"): run shelve <id>. A parked topic comes back only when the user asks: run unpark <id>.
 - The user brings up something that may have been worked on before: run find with its key words. On a real match, offer three ways back in one line: start fresh, continue with the saved progress, or resume the old conversation; then run back with the chosen --mode.
 - A topic whose notes and links are enough for a sub-agent to work alone: elect it, silently. Only when the user asks to delegate an elected topic: run brief, start a background sub-agent with it, and run delegation <id> running; when it reports, save its findings as notes and run delegation <id> done, or needs-input.
 - Natural breaks are: the focus topic is done, a topic is done, or the session starts. Only then mention parked ideas, most valuable first, using parked.

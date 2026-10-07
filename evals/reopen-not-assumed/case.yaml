@@ -9,7 +9,8 @@
     "prompt": "what did we conclude about restarting the web pods?",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/reopen-not-assumed/fixtures/seed.json"

@@ -9,7 +9,8 @@
     "prompt": "where were we?",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/resume-keeps-tree/fixtures/seed.json"

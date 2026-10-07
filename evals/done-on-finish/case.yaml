@@ -9,7 +9,8 @@
     "prompt": "great, that fully answers my list comprehension question, thanks",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/done-on-finish/fixtures/seed.json"

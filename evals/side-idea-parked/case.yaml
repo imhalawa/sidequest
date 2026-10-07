@@ -9,7 +9,8 @@
     "prompt": "show me a decorator that takes arguments, oh and we should probably move this project to uv someday",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/side-idea-parked/fixtures/seed.json"

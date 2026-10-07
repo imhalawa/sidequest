@@ -90,6 +90,29 @@ def new_topic(state, title, parent_id, session, status="open"):
     return topic
 
 
+STOP_WORDS = {"the", "and", "for", "with", "from", "into", "about", "that", "this", "fix", "check", "add", "make", "find"}
+
+
+def key_words(text):
+    lowered = (text or "").lower()
+    words = {word for word in re.findall(r"[a-z']{4,}", lowered) if word not in STOP_WORDS}
+    numbers = set(re.findall(r"\d{2,}", lowered))
+    keys = set(re.findall(r"[a-z]+-\d+", lowered))
+    return words | numbers | keys
+
+
+def related_open(state, topic):
+    mine = key_words(topic["title"])
+    found = []
+    for other in state["topics"]:
+        if other["id"] == topic["id"] or other["status"] != "open":
+            continue
+        shared = mine & key_words(other["title"])
+        if shared:
+            found.append((len(shared), other))
+    return [other for _, other in sorted(found, key=lambda item: -item[0])]
+
+
 def fork(state, session, title, under, reason):
     title = title.strip()
     if not title:
@@ -110,6 +133,27 @@ def fork(state, session, title, under, reason):
         add_link(topic, f"branch: {branch}")
     enter(state, topic)
     print(f"#{topic['id']} {title} · depth {len(tree.ancestors(state, topic))}{progress_prompt(state, leaving)}")
+    if parent_id is None:
+        related = related_open(state, topic)
+        if related:
+            other = related[0]
+            print(f"Related open topic: #{other['id']} {other['title']}. If this is part of it, run move {topic['id']} --under {other['id']}")
+    return 0
+
+
+def move(state, topic_id, under):
+    topic = tree.find(state, topic_id)
+    if topic is None:
+        return fail(f"no topic #{topic_id}")
+    parent_id = parse_parent(under)
+    if parent_id is not None:
+        parent = tree.find(state, parent_id)
+        if parent is None:
+            return fail(f"no topic #{parent_id}")
+        if any(item["id"] == topic_id for item in tree.ancestors(state, parent)):
+            return fail(f"#{parent_id} is inside #{topic_id}; a topic cannot move under itself")
+    topic["parent"] = parent_id
+    print(f"#{topic_id} moved under {'the top' if parent_id is None else '#' + str(parent_id)}")
     return 0
 
 
@@ -129,6 +173,8 @@ def open_descendants(state, topic_id):
     children = [topic for topic in state["topics"] if topic["parent"] == topic_id]
     found = []
     for child in children:
+        if child["status"] == "parked":
+            continue
         if child["status"] == "open":
             found.append(child)
         found += open_descendants(state, child["id"])
@@ -247,6 +293,43 @@ def resume_paused(state):
         return ""
     enter(state, paused)
     return f"resume #{paused['id']} {paused['title']}"
+
+
+def shelve(state, topic_id):
+    topic = tree.find(state, topic_id)
+    if topic is None:
+        return fail(f"no topic #{topic_id}")
+    if topic["status"] != "open":
+        return fail(f"#{topic_id} is {topic['status']}; only an open topic can be parked")
+    if state["focus"] == topic_id:
+        return fail(f"#{topic_id} is the focus topic; end focus before parking it")
+    topic["status"] = "parked"
+    topic["home"] = topic["parent"]
+    if state["current"] is not None and any(item["id"] == topic_id for item in tree.ancestors(state, tree.find(state, state["current"]))):
+        state["current"] = nearest_open_parent(state, topic)
+    print(f"parked #{topic_id} {topic['title']}")
+    return 0
+
+
+def unpark(state, session, topic_id, reason):
+    topic = tree.find(state, topic_id)
+    if topic is None:
+        return fail(f"no topic #{topic_id}")
+    if topic["status"] != "parked":
+        return fail(f"#{topic_id} is not parked")
+    home = tree.find(state, topic.get("home")) if topic.get("home") is not None else None
+    parent = home if home is not None and home["status"] == "open" else None
+    if state["focus"] is not None and (parent is None or not in_focus(state, parent["id"])):
+        refused = guard(state, None, topic["title"], reason)
+        if refused:
+            return refused
+    topic["parent"] = parent["id"] if parent else None
+    topic["status"] = "open"
+    topic["home"] = None
+    touch(topic, session)
+    enter(state, topic)
+    print(tree.describe(topic))
+    return 0
 
 
 def focus(state, topic_id, off):
@@ -425,7 +508,11 @@ def back(state, session, source, topic_id, mode):
         for past in old["sessions"] or [source]:
             print(f"claude --resume {past}")
         return 0
-    topic = new_topic(state, old["title"], None, session)
+    copied_parent = next((item for item in state["topics"] if old["parent"] is not None
+                          and f"from: {source}#{old['parent']}" in item["links"]), None)
+    current = tree.find(state, state["current"]) if state["current"] is not None else None
+    parent = copied_parent or (current if current is not None and current["status"] == "open" else None)
+    topic = new_topic(state, old["title"], parent["id"] if parent else None, session)
     add_link(topic, f"from: {source}#{topic_id}")
     if mode == "progress":
         topic["notes"] = list(old["notes"])
@@ -541,6 +628,9 @@ def main(arguments):
     now_parser.add_argument("id", type=int)
     now_parser.add_argument("--reason")
     now_parser.add_argument("--reopen", action="store_true")
+    move_parser = commands.add_parser("move")
+    move_parser.add_argument("id", type=int)
+    move_parser.add_argument("--under", required=True)
     rename_parser = commands.add_parser("rename")
     rename_parser.add_argument("id", type=int)
     rename_parser.add_argument("title")
@@ -553,6 +643,10 @@ def main(arguments):
     link_parser.add_argument("value")
     link_parser.add_argument("--on", type=int)
     commands.add_parser("park").add_argument("text")
+    commands.add_parser("shelve").add_argument("id", type=int)
+    unpark_parser = commands.add_parser("unpark")
+    unpark_parser.add_argument("id", type=int)
+    unpark_parser.add_argument("--reason")
     focus_parser = commands.add_parser("focus")
     focus_parser.add_argument("id", type=int, nargs="?")
     focus_parser.add_argument("--off", action="store_true")
@@ -610,10 +704,13 @@ def main(arguments):
             "drop": lambda: close(state, options.id, "dropped"),
             "now": lambda: now(state, session, options.id, options.reason, options.reopen),
             "rename": lambda: rename(state, options.id, options.title),
+            "move": lambda: move(state, options.id, options.under),
             "note": lambda: note(state, session, options.text, options.on),
             "progress": lambda: progress(state, session, options.text, options.on),
             "link": lambda: link(state, options.kind, options.value, options.on),
             "park": lambda: park(state, session, options.text),
+            "shelve": lambda: shelve(state, options.id),
+            "unpark": lambda: unpark(state, session, options.id, options.reason),
             "focus": lambda: focus(state, options.id, options.off),
             "priority": lambda: priority(state, options.id, options.level),
             "elect": lambda: elect(state, options.id, options.off),

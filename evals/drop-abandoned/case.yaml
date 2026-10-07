@@ -9,7 +9,8 @@
     "prompt": "forget the topic tracker hook, we don't need it anymore",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/drop-abandoned/fixtures/seed.json"

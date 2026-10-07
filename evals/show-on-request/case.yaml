@@ -9,7 +9,8 @@
     "prompt": "show me my topics",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/show-on-request/fixtures/seed.json"

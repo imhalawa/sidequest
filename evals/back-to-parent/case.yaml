@@ -9,7 +9,8 @@
     "prompt": "ok, back to Sarah's CSV export now",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/back-to-parent/fixtures/seed.json"

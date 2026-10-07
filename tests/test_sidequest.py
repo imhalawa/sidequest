@@ -863,6 +863,106 @@ class ParkTests(TopicTreeTestCase):
         self.assertEqual(len([line for line in result.stdout.splitlines() if line.startswith("- ")]), 3)
 
 
+class NestingTests(TopicTreeTestCase):
+    def test_fork_AtRootSharingWordsWithAnOpenTopic_HintsAtThatTopic(self):
+        self.cli("fork", "Review the comments on PR #210")
+        self.cli("now", "1")
+
+        result = self.cli("fork", "Fix the dotnet format drift flagged on PR #210", "--under", "root")
+
+        self.assertIn("#1", result.stdout)
+        self.assertIn("--under 1", result.stdout)
+
+    def test_fork_AtRootWithNothingInCommon_GivesNoHint(self):
+        self.cli("fork", "Review the comments on PR #210")
+
+        result = self.cli("fork", "Plan the team offsite", "--under", "root")
+
+        self.assertNotIn("--under", result.stdout)
+
+    def test_back_ForAChildWhoseParentWasBroughtBack_NestsItUnderThatCopy(self):
+        self.cli("fork", "Find why orders miss their totals", session="old")
+        self.cli("fork", "Fetch Sarah's CSV export", session="old")
+
+        self.cli("back", "old", "1", "--mode", "progress", session="new")
+        self.cli("back", "old", "2", "--mode", "progress", session="new")
+
+        topics = self.state("new")["topics"]
+        self.assertEqual(topics[1]["parent"], topics[0]["id"])
+
+    def test_back_ForAChildAlone_PutsItUnderTheCurrentTopic(self):
+        self.cli("fork", "Find why orders miss their totals", session="old")
+        self.cli("fork", "Fetch Sarah's CSV export", session="old")
+        self.cli("fork", "Today's checkout work", session="new")
+
+        self.cli("back", "old", "2", "--mode", "fresh", session="new")
+
+        self.assertEqual(self.state("new")["topics"][1]["parent"], 1)
+
+
+class ShelveTests(TopicTreeTestCase):
+    def setUp(self):
+        super().setUp()
+        self.cli("fork", "Fix the checkout timeout")
+        self.cli("fork", "Read the gateway logs")
+        self.cli("fork", "Grep for 504s")
+
+    def test_shelve_ParksTheTopicWithItsBranchAndRemembersWhereItWas(self):
+        result = self.cli("shelve", "2")
+
+        topic = self.state()["topics"][1]
+        self.assertEqual(topic["status"], "parked")
+        self.assertEqual(topic["home"], 1)
+        self.assertEqual(self.state()["topics"][2]["parent"], 2)
+        self.assertEqual(self.state()["current"], 1)
+        self.assertIn("parked #2", result.stdout)
+
+    def test_shelve_HidesTheBranchFromTheTree(self):
+        self.cli("shelve", "2")
+
+        tree_lines = self.cli("show").stdout
+
+        self.assertNotIn("Grep for 504s", tree_lines.split("◇")[0])
+
+    def test_unpark_PutsItBackUnderItsOldParentAndMakesItCurrent(self):
+        self.cli("shelve", "2")
+
+        self.cli("unpark", "2")
+
+        topic = self.state()["topics"][1]
+        self.assertEqual(topic["status"], "open")
+        self.assertEqual(topic["parent"], 1)
+        self.assertEqual(self.state()["current"], 2)
+
+    def test_unpark_WhenTheOldParentIsClosed_PutsItAtTheTop(self):
+        self.cli("shelve", "2")
+        self.cli("done", "1")
+
+        self.cli("unpark", "2")
+
+        self.assertIsNone(self.state()["topics"][1]["parent"])
+
+    def test_unpark_ANewIdea_PutsItAtTheTop(self):
+        self.cli("park", "cache price lookups")
+
+        self.cli("unpark", "4")
+
+        self.assertIsNone(self.state()["topics"][3]["parent"])
+        self.assertEqual(self.state()["topics"][3]["status"], "open")
+
+    def test_unpark_ATopicThatIsNotParked_Fails(self):
+        result = self.cli("unpark", "1")
+
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_shelve_AClosedTopic_Fails(self):
+        self.cli("done", "3")
+
+        result = self.cli("shelve", "3")
+
+        self.assertNotEqual(result.returncode, 0)
+
+
 class PriorityTests(TopicTreeTestCase):
     def test_priority_SetsIt(self):
         self.cli("fork", "Fix the production outage")

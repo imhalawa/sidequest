@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.0
+
+- `◇ park` parks the current topic with its whole branch; it remembers where it was.
+- Clicking a parked idea asks before bringing it back into the tree, under its old parent when that is still open.
+- Questions with choices (priority, the three ways back, leaving focus) use the question tool when it is available.
+- Nesting: work on the same PR, ticket, branch, or goal as an open topic is filed under it, not at the top. A top-level fork that shares words with an open topic prints a hint, and the new `move` command re-files it.
+- `back` keeps a restored topic under the restored copy of its old parent, or under the current topic.
+- `⌨ shortcuts` (key `s`) shows every panel shortcut in one line.
+- The command list Claude gets with every message now includes move, progress, park, shelve, unpark, focus, priority, and elect.
+
 ## 0.3.0
 
 - Desktop app: the topic tree lives in a side panel that opens with the session; the band above the prompt becomes one line with `open topics`. `/sidequest` reopens the panel. The terminal is unchanged.

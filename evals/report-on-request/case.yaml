@@ -9,7 +9,8 @@
     "prompt": "the sidequest panel is acting weird, I want to report a bug",
     "max_turns": 10,
     "allowed_tools": [
-      "mcp__sidequest__topics"
+      "mcp__sidequest__topics",
+      "AskUserQuestion"
     ],
     "env": {
       "EVAL_SIDEQUEST_SEED": "evals/report-on-request/fixtures/seed.json"

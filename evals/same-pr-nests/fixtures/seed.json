@@ -1,0 +1,18 @@
+{
+  "current": 1,
+  "messages": 4,
+  "topics": [
+    {
+      "id": 1,
+      "title": "Review the comments on PR #210",
+      "parent": null,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "title": "Plan the team offsite",
+      "parent": null,
+      "status": "open"
+    }
+  ]
+}
